@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Warehouse.App", "Warehouse.App\Warehouse.App.csproj", "{FCD54FBC-E1F5-4E8F-9716-D6E93BCA2E0C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Warehouse.Domain", "Warehouse.Domain\Warehouse.Domain.csproj", "{F99019DA-4B5F-48A0-B107-57FCEAB381DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Warehouse.TestApp", "Warehouse.TestApp\Warehouse.TestApp.csproj", "{538934A4-D3FB-4F99-BF35-470269519E1F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wahehouse.Gui", "Wahehouse.Gui\Wahehouse.Gui.csproj", "{C398D0F9-12F0-4508-8BFF-5C482CD230C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Warehouse.Gui", "Wahehouse.Gui\Warehouse.Gui.csproj", "{C398D0F9-12F0-4508-8BFF-5C482CD230C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,10 +23,6 @@ Global
 		{F99019DA-4B5F-48A0-B107-57FCEAB381DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F99019DA-4B5F-48A0-B107-57FCEAB381DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F99019DA-4B5F-48A0-B107-57FCEAB381DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{538934A4-D3FB-4F99-BF35-470269519E1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{538934A4-D3FB-4F99-BF35-470269519E1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{538934A4-D3FB-4F99-BF35-470269519E1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{538934A4-D3FB-4F99-BF35-470269519E1F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C398D0F9-12F0-4508-8BFF-5C482CD230C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C398D0F9-12F0-4508-8BFF-5C482CD230C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C398D0F9-12F0-4508-8BFF-5C482CD230C5}.Release|Any CPU.ActiveCfg = Release|Any CPU

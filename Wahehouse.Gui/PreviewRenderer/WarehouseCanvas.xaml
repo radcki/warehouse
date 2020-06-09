@@ -1,0 +1,76 @@
+﻿<UserControl x:Class="Warehouse.Gui.PreviewRenderer.WarehouseCanvas"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Warehouse.Gui.PreviewRenderer"
+             xmlns:entities="clr-namespace:Warehouse.Domain.Entities;assembly=Warehouse.Domain"
+             xmlns:valueConverters="clr-namespace:Warehouse.Gui.PreviewRenderer.ValueConverters"
+             DataContext="{Binding Source={StaticResource Locator}, Path=PreviewRendererViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <valueConverters:LayoutCollectionToGeometryValueConverter x:Key="LayoutCollectionToGeometryValueConverter" />
+        <valueConverters:LayoutCollectionToStrokeValueConverter x:Key="LayoutCollectionToStrokeValueConverter" />
+        <valueConverters:LayoutCollectionToFillValueConverter x:Key="LayoutCollectionToFillValueConverter" />
+    </UserControl.Resources>
+    <Grid>
+        <ItemsControl ItemsSource="{Binding Path=LayoutElementCollections}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Width="{Binding WarehouseLayout.Width}"
+                            Height="{Binding WarehouseLayout.Height}"
+                            IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="{x:Type ContentPresenter}">
+                    <Setter Property="Canvas.Left" Value="0" />
+                    <Setter Property="Canvas.Top" Value="0" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Path>
+                        <Path.Data>
+                            <MultiBinding Converter="{StaticResource LayoutCollectionToGeometryValueConverter}">
+                                <Binding Path="DataContext.LayoutElementCollections"
+                                         RelativeSource="{RelativeSource FindAncestor, AncestorType=UserControl}" />
+                                <Binding />
+                                <Binding></Binding>
+                                <MultiBinding.FallbackValue>
+                                    <StreamGeometry />
+                                </MultiBinding.FallbackValue>
+
+                            </MultiBinding>
+                        </Path.Data>
+                        <Path.Stroke>
+                            <MultiBinding Converter="{StaticResource LayoutCollectionToStrokeValueConverter}">
+                                <Binding Path="DataContext.LayoutElementCollections"
+                                         RelativeSource="{RelativeSource FindAncestor, AncestorType=UserControl}" />
+                                <Binding />
+                                <Binding></Binding>
+                                <MultiBinding.FallbackValue>
+                                    <SolidColorBrush Color="#000000" />
+                                </MultiBinding.FallbackValue>
+                            </MultiBinding>
+                        </Path.Stroke>
+                        <Path.Fill>
+                            <MultiBinding Converter="{StaticResource LayoutCollectionToFillValueConverter}">
+                                <Binding Path="DataContext.LayoutElementCollections"
+                                         RelativeSource="{RelativeSource FindAncestor, AncestorType=UserControl}" />
+                                <Binding />
+                                <Binding></Binding>
+                                <MultiBinding.FallbackValue>
+                                    <SolidColorBrush Color="#000000" />
+                                </MultiBinding.FallbackValue>
+                            </MultiBinding>
+                        </Path.Fill>
+                    </Path>
+                </DataTemplate>
+
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</UserControl>

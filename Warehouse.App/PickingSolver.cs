@@ -83,15 +83,15 @@ namespace Warehouse.App
 						possibleNextSlots = possibleNextSlots.Where(x => x.Sku != possibleNextSlot.Sku).ToList();
 					}
 
-					var next = new PickingTravelStep(possibleNextSlot.Coords, possibleNextSlot.Sku, possibleNextSlot.Units, yetRequired)
+					var next = new PickingTravelStep(possibleNextSlot.Position, possibleNextSlot.Sku, possibleNextSlot.Units, yetRequired)
 					{
 						Parent = currentPosition
 					};
-					next.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, next.Coords, currentPosition.Coords);
+					next.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, next.Position, currentPosition.Position);
 					next.VisitedSlots = new List<PickingSlot>(currentPosition.VisitedSlots) {possibleNextSlot};
 
 					tentativeCost = possibleNextSlots.Count > 0
-						? (int) possibleNextSlots.Average(x => FindTravelCostBetween(precalculatedRoutes, x.Coords, possibleNextSlot.Coords))
+						? (int) possibleNextSlots.Average(x => FindTravelCostBetween(precalculatedRoutes, x.Position, possibleNextSlot.Position))
 						: 0;
 					tentativeCost += currentPosition.CostFromStart;
 
@@ -104,7 +104,7 @@ namespace Warehouse.App
 
 			var endPosition = _warehouseLayout.GetPickingEndPosition();
 			var finalStep = new PickingTravelStep(endPosition, -1, 0, currentPosition.PendingSkus);
-			finalStep.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, finalStep.Coords, currentPosition.Coords);
+			finalStep.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, finalStep.Position, currentPosition.Position);
 			finalStep.Parent = currentPosition;
 			currentPosition = finalStep;
 
@@ -117,7 +117,7 @@ namespace Warehouse.App
 				steps.Add(currentPosition);
 				if (nextPosition != null && currentPosition != (PickingTravelStep) nextPosition)
 				{
-					var route = FindTravelRouteBetween(precalculatedRoutes, currentPosition.Coords, nextPosition.Coords).Route;
+					var route = FindTravelRouteBetween(precalculatedRoutes, currentPosition.Position, nextPosition.Position).Route;
 					foreach (var coord in route)
 					{
 						result.PathCoordinates.Add(coord);
@@ -167,7 +167,7 @@ namespace Warehouse.App
 
 		private HashSet<RouteBetweenCoords> GetRoutesBetweenSlots(List<PickingSlot> pickingSlots)
 		{
-			var coordsSet = new HashSet<Coord>(pickingSlots.Select(x => x.Coords))
+			var coordsSet = new HashSet<Coord>(pickingSlots.Select(x => x.Position))
 			{
 				_warehouseLayout.GetPickingEndPosition(),
 				_warehouseLayout.GetPickingStartPosition(),

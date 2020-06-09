@@ -15,8 +15,9 @@
 using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
+using Warehouse.Gui.PreviewRenderer;
 
-namespace Wahehouse.Gui.ViewModel
+namespace Warehouse.Gui.ViewModel
 {
 	/// <summary>
 	/// This class contains static references to all the view models in the
@@ -32,6 +33,7 @@ namespace Wahehouse.Gui.ViewModel
 			ServiceLocator.SetLocatorProvider(() => SimpleIoc.Default);
 
 			SimpleIoc.Default.Register<MainViewModel>();
+			SimpleIoc.Default.Register<PreviewRendererViewModel>();
 		}
 
 		public MainViewModel MainViewModel
@@ -39,7 +41,12 @@ namespace Wahehouse.Gui.ViewModel
 			get { return ServiceLocator.Current.GetInstance<MainViewModel>(); }
 		}
 
-		public static void Cleanup()
+        public PreviewRendererViewModel PreviewRendererViewModel
+        {
+            get { return  ServiceLocator.Current.GetInstance<PreviewRendererViewModel>(); }
+        }
+
+        public static void Cleanup()
 		{
 			// TODO Clear the ViewModels
 		}

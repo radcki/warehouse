@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C398D0F9-12F0-4508-8BFF-5C482CD230C5}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>Wahehouse.Gui</RootNamespace>
-    <AssemblyName>Wahehouse.Gui</AssemblyName>
+    <RootNamespace>Warehouse.Gui</RootNamespace>
+    <AssemblyName>Warehouse.Gui</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -75,7 +75,17 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Helpers\LayoutGenerator.cs" />
-    <Compile Include="PreviewRenderer\PreviewRenderer.cs" />
+    <Compile Include="Helpers\ZoomBorder.cs" />
+    <Compile Include="PreviewRenderer\Extensions\GeometryExtensions.cs" />
+    <Compile Include="PreviewRenderer\PreviewRendererViewModel.cs" />
+    <Compile Include="PreviewRenderer\StateModels\EmptyPickingSlot.cs" />
+    <Compile Include="PreviewRenderer\StateModels\FilledPickingSlot.cs" />
+    <Compile Include="PreviewRenderer\ValueConverters\LayoutCollectionToGeometryValueConverter.cs" />
+    <Compile Include="PreviewRenderer\ValueConverters\LayoutCollectionToFillValueConverter.cs" />
+    <Compile Include="PreviewRenderer\ValueConverters\LayoutCollectionToStrokeValueConverter.cs" />
+    <Compile Include="PreviewRenderer\WarehouseCanvas.xaml.cs">
+      <DependentUpon>WarehouseCanvas.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ValueConverters\ImageSourceValueConverter.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
@@ -91,6 +101,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="PreviewRenderer\WarehouseCanvas.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

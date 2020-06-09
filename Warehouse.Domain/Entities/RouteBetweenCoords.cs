@@ -23,7 +23,7 @@ namespace Warehouse.Domain.Entities
 		{
 			var last = travelSteps.Length > 0 ? travelSteps[travelSteps.Length-1] : null;
 
-			Route = travelSteps.Select(x => x.Coords).ToArray();
+			Route = travelSteps.Select(x => x.Position).ToArray();
 			if (last != null)
 			{
 				TravelCost = last.CostFromStart + last.TraverseCost;

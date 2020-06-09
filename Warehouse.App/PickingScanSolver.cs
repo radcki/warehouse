@@ -62,7 +62,7 @@ namespace Warehouse.App
 
 				_warehouseLayout.PickingSlots.FirstOrDefault(x => x == possiblePickingSlot).Units -= unitsToTake;
 				remainingInOrder[possiblePickingSlot.Sku] -= unitsToTake;
-				currentPosition = new PickingTravelStep(possiblePickingSlot.Coords, possiblePickingSlot.Sku, unitsToTake, new Dictionary<long, int>(remainingInOrder));
+				currentPosition = new PickingTravelStep(possiblePickingSlot.Position, possiblePickingSlot.Sku, unitsToTake, new Dictionary<long, int>(remainingInOrder));
 				currentPosition.Parent = previousPosition;
 
 				if (!remainingInOrder.Any(x => x.Value > 0))
@@ -73,7 +73,7 @@ namespace Warehouse.App
 
 			var endPosition = _warehouseLayout.GetPickingEndPosition();
 			var finalStep = new PickingTravelStep(endPosition, -1, 0, currentPosition.PendingSkus);
-			finalStep.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes,finalStep.Coords, currentPosition.Coords);
+			finalStep.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes,finalStep.Position, currentPosition.Position);
 			finalStep.Parent = currentPosition;
 			currentPosition = finalStep;
 
@@ -86,7 +86,7 @@ namespace Warehouse.App
 				steps.Add(currentPosition);
 				if (nextPosition != null && currentPosition!=(PickingTravelStep)nextPosition)
 				{
-					var route = FindTravelRouteBetween(precalculatedRoutes, currentPosition.Coords, nextPosition.Coords).Route;
+					var route = FindTravelRouteBetween(precalculatedRoutes, currentPosition.Position, nextPosition.Position).Route;
 					foreach (var coord in route)
 					{
 						result.PathCoordinates.Add(coord);
@@ -133,7 +133,7 @@ namespace Warehouse.App
 
         private HashSet<RouteBetweenCoords> GetRoutesBetweenSlots(List<PickingSlot> pickingSlots)
 		{
-			var coordsSet = new HashSet<Coord>(pickingSlots.Select(x => x.Coords))
+			var coordsSet = new HashSet<Coord>(pickingSlots.Select(x => x.Position))
 			{
 				_warehouseLayout.GetPickingEndPosition(),
 				_warehouseLayout.GetPickingStartPosition(),

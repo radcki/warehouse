@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 
-namespace Wahehouse.Gui.ValueConverters
+namespace Warehouse.Gui.ValueConverters
 {
     public class ImageSourceValueConverter : IValueConverter
     {

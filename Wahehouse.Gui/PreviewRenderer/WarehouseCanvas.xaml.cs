@@ -13,14 +13,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Warehouse.Gui
+namespace Warehouse.Gui.PreviewRenderer
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for WarehouseCanvas.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class WarehouseCanvas : UserControl
     {
-        public MainWindow()
+        public WarehouseCanvas()
         {
             InitializeComponent();
         }

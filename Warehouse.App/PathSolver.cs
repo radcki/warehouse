@@ -29,7 +29,7 @@ namespace Warehouse.App
         {
             var result = new PathFindingResult<TravelStep>();
 
-            if (!_warehouseLayout.IsWalkable(startTravelStep.Coords))
+            if (!_warehouseLayout.IsWalkable(startTravelStep.Position))
             {
 				return new PathFindingResult<TravelStep>()
 				{
@@ -37,7 +37,7 @@ namespace Warehouse.App
 				};
             }
 
-            if (!_warehouseLayout.IsWalkable(endTravelStep.Coords))
+            if (!_warehouseLayout.IsWalkable(endTravelStep.Position))
             {
                 return new PathFindingResult<TravelStep>()
 				{
@@ -69,7 +69,7 @@ namespace Warehouse.App
                 // dodaj wyszukane do sterty
                 foreach (var position in movementOptions)
                 {
-					result.CheckedCoordinates.Add(position.Coords);
+					result.CheckedCoordinates.Add(position.Position);
 
                     if (closedList[position.X, position.Y] == 1)
                     {
@@ -104,7 +104,7 @@ namespace Warehouse.App
                 var nextPosition = currentPosition.Parent;
                 currentPosition.Parent = null;
                 steps.Add(currentPosition);
-				result.PathCoordinates.Add(currentPosition.Coords);
+				result.PathCoordinates.Add(currentPosition.Position);
 
                 currentPosition = nextPosition as TravelStep;
             }

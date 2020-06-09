@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Warehouse.Domain.Interfaces;
 
 namespace Warehouse.Domain.Entities
 {
-    public class Obstacle
-    {
+    public class Obstacle: ILayoutElement 
+	{
 		public Coord Position { get; private set; }
 		public Area Area { get; private set; }
 

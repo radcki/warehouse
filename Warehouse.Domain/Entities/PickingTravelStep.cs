@@ -8,9 +8,10 @@ namespace Warehouse.Domain.Entities
 		public int X,
 				   Y;
 
-		public Coord Coords { get; }
+		public Coord Position { get; }
+		public Area Area { get; }
 		public int TraverseCost { get; }
-		public long Sku { get; private set; }
+        public long Sku { get; private set; }
 		public int AvailableUnits { get; private set; }
 		public int CostFromStart { get; set; }
 		public float CostEstimation { get; set; }
@@ -24,7 +25,7 @@ namespace Warehouse.Domain.Entities
 		{
 			X = coords.X;
 			Y = coords.Y;
-			Coords = coords;
+			Position = coords;
 			Sku = sku;
 			AvailableUnits = availableUnits;
 			PendingSkus = pendingSkus;
@@ -36,7 +37,7 @@ namespace Warehouse.Domain.Entities
 			Y = y;
 			AvailableUnits = availableUnits;
 			PendingSkus = pendingSkus;
-			Coords = new Coord(x, y);
+			Position = new Coord(x, y);
 		}
 
 		public bool Equals(PickingTravelStep other)

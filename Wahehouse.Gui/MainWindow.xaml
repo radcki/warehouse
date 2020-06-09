@@ -1,27 +1,46 @@
-﻿<Window x:Class="Wahehouse.Gui.MainWindow"
+﻿<Window x:Class="Warehouse.Gui.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Wahehouse.Gui"
-        xmlns:valueConverters="clr-namespace:Wahehouse.Gui.ValueConverters"
+        xmlns:local="clr-namespace:Warehouse.Gui"
+        xmlns:valueConverters="clr-namespace:Warehouse.Gui.ValueConverters"
+        xmlns:previewRenderer="clr-namespace:Warehouse.Gui.PreviewRenderer"
+        xmlns:helpers="clr-namespace:Warehouse.Gui.Helpers"
         DataContext="{Binding Source={StaticResource Locator}, Path=MainViewModel}"
         mc:Ignorable="d"
         Title="Magazyn" Height="450" Width="800">
-	<Window.Resources>
-		<valueConverters:ImageSourceValueConverter x:Key="ImageSourceValueConverter" />
-	</Window.Resources>
-	<Grid>
+    <Window.Resources>
+        <valueConverters:ImageSourceValueConverter x:Key="ImageSourceValueConverter" />
+    </Window.Resources>
+    <Grid>
         <Grid.RowDefinitions>
-			<RowDefinition></RowDefinition>
-			<RowDefinition Height="Auto"></RowDefinition>
-		</Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
         <Grid Grid.Row="0">
-			<Image Source="{Binding Path=PreviewImage, Converter={StaticResource ImageSourceValueConverter}, Mode=OneWay}"></Image>
-		</Grid>
-		<Grid Grid.Row="1">
-			<ProgressBar Minimum="0" Maximum="10000" Height="30" Value="{Binding ProgressBarValue}"></ProgressBar>
-		</Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+                <StackPanel Orientation="Vertical">
+                    <Button Command="{Binding GenerateLayout}">Generate layout</Button>
+                    <Label>Order count:</Label>
+                    <TextBox Text="{Binding Path=OrdersCount}"></TextBox>
+                    <Button Command="{Binding FindPickingPaths}">Find paths</Button>
+                </StackPanel>
+            </Grid>
+            <Grid Grid.Column="1" Background="White">
+                <helpers:ZoomBorder x:Name="border" ClipToBounds="True" Background="White">
+                    <previewRenderer:WarehouseCanvas />
+                </helpers:ZoomBorder>
+            </Grid>
+
+        </Grid>
+        <Grid Grid.Row="1">
+            <ProgressBar Minimum="0" Maximum="10000" Height="30" Value="{Binding ProgressBarValue}" />
+        </Grid>
     </Grid>
 </Window>

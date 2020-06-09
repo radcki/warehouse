@@ -1,10 +1,11 @@
 ﻿using System;
+using Warehouse.Domain.Interfaces;
 
 namespace Warehouse.Domain.Entities
 {
-	public interface ITravelStep
+	public interface ITravelStep: ILayoutElement
 	{
-		Coord Coords { get; }
+		Coord Position { get; }
 		int TraverseCost { get; }
 		int CostFromStart { get; }
 		float CostEstimation { get; }
@@ -17,24 +18,25 @@ namespace Warehouse.Domain.Entities
 		public int X,
 				   Y;
 
-		public Coord Coords { get; }
+		public Coord Position { get; }
+		public Area Area => new Area(1,1);
 		public int TraverseCost { get; set; } = 1;
 		public int CostFromStart { get; set; }
 		public float CostEstimation { get; set; }
 
 		public ITravelStep Parent { get; set; }
 
-		public TravelStep(Coord coords)
+		public TravelStep(Coord position)
 		{
-			X = coords.X;
-			Y = coords.Y;
-			Coords = coords;
+			X = position.X;
+			Y = position.Y;
+			Position = position;
 		}
 		public TravelStep(int x, int y)
 		{
 			X = x;
 			Y = y;
-			Coords = new Coord(x, y);
+			Position = new Coord(x, y);
 		}
 
 		public float ManhattanDistanceTo(TravelStep other)

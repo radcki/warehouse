@@ -7,22 +7,32 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using System.Windows.Threading;
 using GalaSoft.MvvmLight;
-using Wahehouse.Gui.Helpers;
+using GalaSoft.MvvmLight.CommandWpf;
+using GalaSoft.MvvmLight.Ioc;
 using Warehouse.App;
 using Warehouse.Domain.Entities;
 using Warehouse.Domain.Parameters;
+using Warehouse.Gui.Helpers;
+using Warehouse.Gui.PreviewRenderer;
 
-namespace Wahehouse.Gui.ViewModel
+namespace Warehouse.Gui.ViewModel
 {
     public class MainViewModel : ViewModelBase
     {
 		private Image _previewImage;
-		private PreviewRenderer.PreviewRenderer _previewRenderer;
-		private int _progressBarValue;
+        private PreviewRendererViewModel _previewRenderer => SimpleIoc.Default.GetInstance<PreviewRendererViewModel>();
+        private LayoutGenerator _layoutGenerator = new LayoutGenerator();
+        private int _progressBarValue;
+        private int[] _layoutCorridorGaps = new int[0];
+        private int _layoutCorridorPallets;
+        private int _layoutCorridorCount;
+        private WarehouseLayout _warehouseLayout;
+        private int _ordersCount = 5;
 
-		public Image PreviewImage
+        public Image PreviewImage
 		{
 			get => _previewImage;
 			set => Set(()=>PreviewImage, ref _previewImage, value);
@@ -34,67 +44,92 @@ namespace Wahehouse.Gui.ViewModel
 			set => Set(() => ProgressBarValue, ref _progressBarValue, value);
 		}
 
+        public int LayoutCorridorCount
+        {
+            get => _layoutCorridorCount;
+            set => Set(()=>LayoutCorridorCount, ref _layoutCorridorCount, value);
+        }
 
-		public MainViewModel()
-		{
-			var generator = new LayoutGenerator();
-			var layout = generator.GenerateLayout(60/4, 80, new[] { 20, 60 })
-								  .FillWithArticles(80, 1000, 20)
-								  .GetLayout();
-
-			var orders = generator.GetPickingOrders(5, 100, 100);
-			
-			layout.PickingRoutesCalculationProgress += (sender, args) =>
-			{
-				ProgressBarValue = ((100 * 100 *  args.Done) / args.Todo);
-			};
-
-			_previewRenderer = new PreviewRenderer.PreviewRenderer(layout);
-			PreviewImage = _previewRenderer.GetLayoutPreview();
-
-			Task.Run(() => FindPaths(orders, layout));
+        public int LayoutCorridorPallets
+        {
+            get => _layoutCorridorPallets;
+            set => Set(() => LayoutCorridorPallets, ref _layoutCorridorPallets, value);
+        }
+	
+        public int[] LayoutCorridorGaps
+        {
+            get => _layoutCorridorGaps;
+            set => Set(() => LayoutCorridorGaps, ref _layoutCorridorGaps, value);
 		}
 
-		private void FindPaths(List<PickingOrder> orders, WarehouseLayout layout)
-		{
-            var pickingSolver = new PickingSolver(layout);
+        public WarehouseLayout WarehouseLayout
+        {
+            get => _warehouseLayout;
+            set => Set(() => WarehouseLayout, ref _warehouseLayout, value);
+        }
+
+        public int OrdersCount
+        {
+            get => _ordersCount;
+            set => Set(() => OrdersCount, ref _ordersCount, value);
+        }
+
+
+        public MainViewModel()
+        {
+            LayoutCorridorCount = 15;
+            LayoutCorridorPallets = 80;
+            LayoutCorridorGaps = new int[]{20,60};
+        }
+
+		public ICommand GenerateLayout => new RelayCommand(() => { Task.Run(ExecuteGenerateLayout); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0);
+		public ICommand FindPickingPaths => new RelayCommand(() => { Task.Run(ExecuteFindPickingPaths); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0 && OrdersCount > 0);
+
+        public void ExecuteGenerateLayout()
+        {
+            var generator = _layoutGenerator;
+            var layout = generator.GenerateLayout(LayoutCorridorCount, LayoutCorridorPallets, LayoutCorridorGaps)
+                                  .FillWithArticles(80, 1000, 20)
+                                  .GetLayout();
+
+            var orders = generator.GetPickingOrders(5, 100, 100);
+            WarehouseLayout = layout;
+
+            layout.PickingRoutesCalculationProgress += (sender, args) =>
+                                                       {
+                                                           ProgressBarValue = ((100 * 100 * args.Done) / args.Todo);
+                                                       };
+            _previewRenderer.Clear();
+            _previewRenderer.LoadObstacles();
+            _previewRenderer.LoadPickingSlots();
+
+        }
+
+        public void ExecuteFindPickingPaths()
+        {
+            var pickingSolver = new PickingSolver(_warehouseLayout);
             var distanceSolverResult = new List<PathFindingResult<PickingTravelStep>>();
+            var orders = _layoutGenerator.GetPickingOrders(OrdersCount, 100, 100);
+            _previewRenderer.ClearPickingPaths();
             foreach (var pickingOrder in orders)
             {
                 var result = pickingSolver.FindPath(pickingOrder);
-                Dispatcher.CurrentDispatcher.Invoke(() =>
+                if (result.Success)
                 {
-                    PreviewImage = _previewRenderer.GetPickingPathPreview(result);
-                });
+                    _previewRenderer.AddPickingPathFindingResult(result);
+                }
+
                 distanceSolverResult.Add(result);
             }
 
-            var pickingScanSolver = new PickingScanSolver(layout);
-			var scanSolverResult = new List<PathFindingResult<PickingTravelStep>>();
-			foreach (var pickingOrder in orders)
-			{
-				var result = pickingScanSolver.FindPath(pickingOrder);
-				Dispatcher.CurrentDispatcher.Invoke(() =>
-				{
-					PreviewImage = _previewRenderer.GetPickingPathPreview(result);
-				});
-				scanSolverResult.Add(result);
-			}
+            //var pickingScanSolver = new PickingScanSolver(_warehouseLayout);
+            //var scanSolverResult = new List<PathFindingResult<PickingTravelStep>>();
+            //foreach (var pickingOrder in orders)
+            //{
+            //    var result = pickingScanSolver.FindPath(pickingOrder);
 
-			var distanceSolverTotalDistance = distanceSolverResult.SelectMany(x => x.PathCoordinates).Count();
-			var scanSolverTotalDistance = scanSolverResult.SelectMany(x => x.PathCoordinates).Count();
-			Dispatcher.CurrentDispatcher.Invoke(() =>
-			{
-				PreviewImage = _previewRenderer.GetPickingPathsPreview(distanceSolverResult);
-				var path1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), $"distance {distanceSolverTotalDistance}.png");
-				var path2 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), $"scan {scanSolverTotalDistance}.png");
-
-				PreviewImage.Save(path1,ImageFormat.Png);
-				PreviewImage = _previewRenderer.GetPickingPathsPreview(scanSolverResult);
-
-				PreviewImage.Save(path2,ImageFormat.Png);
-			});
-		}
-
+            //    scanSolverResult.Add(result);
+            //}
+        }
     }
 }

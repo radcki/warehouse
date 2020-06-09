@@ -198,7 +198,7 @@ namespace Warehouse.App
 		public void CalculatePickingRoutes(PathSolver solver)
 		{
 			
-            var coordsSet = new HashSet<Coord>(PickingSlots.Select(x => x.Coords))
+            var coordsSet = new HashSet<Coord>(PickingSlots.Select(x => x.Position))
             {
                 GetPickingStartPosition(),
                 GetPickingEndPosition()

@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="Entities\Area.cs" />
     <Compile Include="Entities\Coord.cs" />
+    <Compile Include="Entities\CoordLayoutElement.cs" />
     <Compile Include="Entities\Obstacle.cs" />
     <Compile Include="Entities\PickingOrder.cs" />
     <Compile Include="Entities\PickingSlot.cs" />
@@ -51,8 +52,10 @@
     <Compile Include="Entities\TravelStep.cs" />
     <Compile Include="HeapList\Heap.cs" />
     <Compile Include="HeapList\Node.cs" />
+    <Compile Include="Interfaces\ILayoutElement.cs" />
     <Compile Include="Parameters\PathFindingResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

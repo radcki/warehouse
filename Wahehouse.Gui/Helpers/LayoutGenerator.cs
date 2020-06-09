@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Warehouse.App;
 using Warehouse.Domain.Entities;
 
-namespace Wahehouse.Gui.Helpers
+namespace Warehouse.Gui.Helpers
 {
     public class LayoutGenerator
     {
@@ -114,19 +114,32 @@ namespace Wahehouse.Gui.Helpers
         public LayoutGenerator FillWithArticles(int targetFillPercent, int skuCount, int maxLocationUnits)
 		{
 			var rnd = new Random();
-			var skus = Enumerable.Range(10000000, 10000000+skuCount*10).OrderBy(x => rnd.Next()).Take(skuCount).Select(x=> (long)x).ToArray();
+			var skus = Enumerable.Range(10000000, skuCount*10)
+                                 .OrderBy(x => rnd.Next())
+                                 .Take(skuCount)
+                                 //.Select(x=> (long)x)
+                                 .ToArray();
 
 
 			int filledPercent = 0;
 			int filledLocations = 0;
-			while (filledPercent < targetFillPercent)
-			{
-				var available = _warehouseLayout.PickingSlots.Where(x => x.Units == 0).ToArray();
-				var location = available[rnd.Next(0, available.Length)];
-				location.Sku = skus[rnd.Next(0, skus.Length)];
-				location.Units = rnd.Next(1, maxLocationUnits);
-				filledLocations += 1;
-				filledPercent = 100*filledLocations / _warehouseLayout.PickingSlots.Count;
+            var available = _warehouseLayout.PickingSlots.Where(x => x.Units == 0).ToArray();
+            var fillOrder = Enumerable.Range(0, available.Length)
+                                      .OrderBy(i => rnd.Next())
+                                      .Take(available.Length)
+                                      .ToArray();
+
+            for (var i = 0; i < available.Length; i++)
+            {
+                var location = available[fillOrder[i]];
+                location.Sku = skus[rnd.Next(0, skus.Length)];
+                location.Units = rnd.Next(1, maxLocationUnits);
+                filledLocations += 1;
+                filledPercent = 100 * filledLocations / _warehouseLayout.PickingSlots.Count;
+                if (filledPercent >= targetFillPercent)
+                {
+					break;
+                }
 			}
 
 			return this;
