@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Warehouse.Domain.Entities
 {
-    public struct Coord : IEquatable<Coord>
+    public struct Coord : IEquatable<Coord>, IComparable<Coord>
 	{
 		public readonly int X;
 		public readonly int Y; 
@@ -50,5 +50,18 @@ namespace Warehouse.Domain.Entities
 		{
 			return new Coord(a.X+b.X,a.Y+b.Y);
 		}
-	}
+
+        #region Relational members
+
+        /// <inheritdoc />
+        public int CompareTo(Coord other)
+        {
+            var xComparison = X.CompareTo(other.X);
+            if (xComparison != 0)
+                return xComparison;
+            return Y.CompareTo(other.Y);
+        }
+
+        #endregion
+    }
 }

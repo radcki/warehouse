@@ -78,5 +78,10 @@ namespace Warehouse.Domain.Entities
 		{
 			return !(a == b);
 		}
+
+        public override int GetHashCode()
+        {
+            return (X + Y).GetHashCode();
+        }
 	}
 }

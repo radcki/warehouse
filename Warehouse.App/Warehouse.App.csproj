@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IEnumerableExtensions.cs" />
     <Compile Include="PathSolver.cs" />
     <Compile Include="PickingScanSolver.cs" />
     <Compile Include="PickingSolver.cs" />

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Warehouse.Domain.Entities;
 
 namespace Warehouse.Domain.HeapList
@@ -13,6 +14,8 @@ namespace Warehouse.Domain.HeapList
         /// Kolejny w kolejności węzeł jest przechowywany jako argument węzła, czyli np. head.Next
         /// </summary>
         private HeapNode<T> HeapHead { get; set; }
+
+        private Dictionary<T, int> ValueIndexes = new Dictionary<T, int>();
 
         public bool HasMore() => HeapHead != null;
 

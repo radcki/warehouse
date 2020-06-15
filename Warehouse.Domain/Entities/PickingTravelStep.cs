@@ -11,8 +11,9 @@ namespace Warehouse.Domain.Entities
 		public Coord Position { get; }
 		public Area Area { get; }
 		public int TraverseCost { get; }
+        public int UnitsToTake { get; set; }
         public long Sku { get; private set; }
-		public int AvailableUnits { get; private set; }
+        public int AvailableUnits { get; private set; }
 		public int CostFromStart { get; set; }
 		public float CostEstimation { get; set; }
 		public Dictionary<long, int> PendingSkus { get; private set; }

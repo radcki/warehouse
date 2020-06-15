@@ -34,7 +34,8 @@ namespace Warehouse.App
 
 		private readonly Area _minimalPassableArea;
 		private byte[,] _pathfindingMap;
-		private HashSet<RouteBetweenCoords> PickingSlotRoutes { get; set; } = new HashSet<RouteBetweenCoords>();
+		private byte[,] _walkableMap;
+        private HashSet<RouteBetweenCoords> PickingSlotRoutes { get; set; } = new HashSet<RouteBetweenCoords>();
 		public event EventHandler<CalculatePickingRouteProgressEventArgs> PickingRoutesCalculationProgress; 
 
 		public List<Obstacle> GetObstacles()
@@ -65,6 +66,7 @@ namespace Warehouse.App
 
 			Obstacles.AddRange(obstacle);
 			GeneratePathfindingMap();
+			GenerateWalkableMap();
 		}
 
         public void AddPickingSlot(PickingSlot slot)
@@ -81,11 +83,13 @@ namespace Warehouse.App
 		{
 			Obstacles = new List<Obstacle>();
 			GeneratePathfindingMap();
-		}
+			GenerateWalkableMap();
+        }
 
 		private void GeneratePathfindingMap()
 		{
 			var area = new byte[Width + 1, Height + 1];
+
 			foreach (var obstacle in Obstacles)
 			{
 				foreach (var coord in obstacle.UsedCoords)
@@ -97,18 +101,21 @@ namespace Warehouse.App
 			_pathfindingMap = area;
 		}
 
-		public byte[,] GetPathfindingMap()
-		{
-			var area = new byte[Width + 1, Height + 1];
-			foreach (var obstacle in Obstacles)
-			{
-				foreach (var coord in obstacle.UsedCoords)
-				{
-					area[coord.X, coord.Y] = 1;
-				}
+        private void GenerateWalkableMap()
+        {
+            var area = new byte[Width + 1, Height + 1];
+            for (var x = 0; x <= Width; x++)
+            {
+                for (var y = 0; y <= Height; y++)
+                {
+                    if (!InternalIsWalkable(x, y))
+                    {
+                        area[x, y] = 1;
+                    }
+                }
 			}
-			return area;
-        }
+			_walkableMap = area;
+		}
 
         public bool IsAvailable(Coord coord)
 		{
@@ -119,9 +126,18 @@ namespace Warehouse.App
 				   && _pathfindingMap[coord.X, coord.Y] == 0;
 		}
 
-		public bool IsWalkable(Coord coord)
+        public bool IsWalkable(Coord coord)
+        {
+            return coord.X >= 0
+                   && coord.Y >= 0
+                   && coord.X <= Width
+                   && coord.Y <= Height
+                   && _walkableMap[coord.X, coord.Y] == 0;
+		}
+
+		private bool InternalIsWalkable(int x, int y)
 		{
-			if (!IsAvailable(coord))
+			if (!IsAvailable(new Coord(x,y)))
 			{
 				return false;
 			}
@@ -135,7 +151,7 @@ namespace Warehouse.App
 			var rightAvailableCount = 0;
 			for (var i = 1; i <= _minimalPassableArea.Width; i++)
 			{
-				if (!IsAvailable(new Coord(coord.X - i, coord.Y)))
+				if (!IsAvailable(new Coord(x - i, y)))
 				{
 					break;
 				}
@@ -147,7 +163,7 @@ namespace Warehouse.App
 			{
 				for (var i = 1; i <= _minimalPassableArea.Width; i++)
 				{
-					if (!IsAvailable(new Coord(coord.X + i, coord.Y)))
+					if (!IsAvailable(new Coord(x + i, y)))
 					{
 						break;
 					}
@@ -165,7 +181,7 @@ namespace Warehouse.App
 			var bottomAvailableCount = 0;
 			for (var i = 1; i <= _minimalPassableArea.Height; i++)
 			{
-				if (!IsAvailable(new Coord(coord.X, coord.Y + 1)))
+				if (!IsAvailable(new Coord(x, y + 1)))
 				{
 					break;
 				}
@@ -177,7 +193,7 @@ namespace Warehouse.App
 			{
 				for (var i = 1; i <= _minimalPassableArea.Height; i++)
 				{
-					if (!IsAvailable(new Coord(coord.X, coord.Y - 1)))
+					if (!IsAvailable(new Coord(x, y - 1)))
 					{
 						break;
 					}

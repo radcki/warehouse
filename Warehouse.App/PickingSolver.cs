@@ -10,206 +10,213 @@ using Warehouse.Domain.Parameters;
 
 namespace Warehouse.App
 {
-	public class PickingSolver
-	{
-		#region Privates
+    public class PickingSolver
+    {
+        #region Privates
 
-		private readonly WarehouseLayout _warehouseLayout;
-		private readonly PathSolver _pathSolver;
+        private readonly WarehouseLayout _warehouseLayout;
+        private readonly PathSolver _pathSolver;
 
-		#endregion
+        #endregion
 
-		#region Constructors
+        #region Constructors
 
-		public PickingSolver(WarehouseLayout warehouseLayout)
-		{
-			_warehouseLayout = warehouseLayout;
-			_pathSolver = new PathSolver(warehouseLayout);
-		}
+        public PickingSolver(WarehouseLayout warehouseLayout)
+        {
+            _warehouseLayout = warehouseLayout;
+            _pathSolver = new PathSolver(warehouseLayout);
+        }
 
-		#endregion
+        #endregion
 
-		#region Methods
+        #region Methods
 
-		public PathFindingResult<PickingTravelStep> FindPath(PickingOrder order)
-		{
-			var result = new PathFindingResult<PickingTravelStep>
-			{
-				Success = true,
-			};
+        public PathFindingResult<PickingTravelStep> FindPath(PickingOrder order)
+        {
+            var result = new PathFindingResult<PickingTravelStep>
+                         {
+                             Success = true,
+                         };
 
-			var openList = new Heap<PickingTravelStep>();
+            var openList = new Heap<PickingTravelStep>();
 
-			var currentPosition = new PickingTravelStep(_warehouseLayout.GetPickingStartPosition(), -1, 0, new Dictionary<long, int>(order.RequiredArticles));
+            var currentPosition = new PickingTravelStep(_warehouseLayout.GetPickingStartPosition(), -1, 0, new Dictionary<long, int>(order.RequiredArticles));
 
-			var possiblePickingSlots = order.RequiredArticles
-											.SelectMany(x => _warehouseLayout.GetPickingSlotsWithSku(x.Key))
-											.ToList();
+            var possiblePickingSlots = order.RequiredArticles
+                                            .SelectMany(x => _warehouseLayout.GetPickingSlotsWithSku(x.Key))
+                                            .ToList();
 
-			var precalculatedRoutes = GetRoutesBetweenSlots(possiblePickingSlots);
-			while (currentPosition.PendingSkus.Count > 0)
-			{
-				if (currentPosition.Sku > 0 && currentPosition.AvailableUnits > 0 && currentPosition.PendingSkus.ContainsKey(currentPosition.Sku))
-				{
-					var requiredUnits = currentPosition.PendingSkus[currentPosition.Sku];
-					var unitsToTake = Math.Min(requiredUnits, currentPosition.AvailableUnits);
-					currentPosition.PendingSkus[currentPosition.Sku] -= unitsToTake;
-				}
+            var precalculatedRoutes = GetRoutesBetweenSlots(possiblePickingSlots);
+            var endPosition = _warehouseLayout.GetPickingEndPosition();
 
-				var yetRequired = currentPosition.PendingSkus.Where(x => x.Value > 0).ToDictionary(x => x.Key, x => x.Value);
+            while (currentPosition.PendingSkus.Count > 0)
+            {
+                if (currentPosition.Sku > 0 && currentPosition.AvailableUnits > 0 && currentPosition.PendingSkus.ContainsKey(currentPosition.Sku))
+                {
+                    var requiredUnits = currentPosition.PendingSkus[currentPosition.Sku];
+                    var unitsToTake = Math.Min(requiredUnits, currentPosition.AvailableUnits);
+                    currentPosition.PendingSkus[currentPosition.Sku] -= unitsToTake;
+                }
 
-				if (yetRequired.Count == 0)
-				{
-					result.Success = true;
-					break;
-				}
+                var yetRequired = currentPosition.PendingSkus.Where(x => x.Value > 0).ToDictionary(x => x.Key, x => x.Value);
 
-				var possibleNextSlots = possiblePickingSlots.Where(x => yetRequired.ContainsKey(x.Sku) && !currentPosition.VisitedSlots.Contains(x))
-															.ToList();
-				if (!possibleNextSlots.Any())
-				{
-					result.Success = false;
-					break;
-				}
+                if (yetRequired.Count == 0)
+                {
+                    result.Success = true;
+                    break;
+                }
 
-
-				foreach (var possibleNextSlot in possibleNextSlots)
-				{
-					var remainingUnits = yetRequired[possibleNextSlot.Sku];
-					var unitsToTake = Math.Min(remainingUnits, currentPosition.AvailableUnits);
-					int tentativeCost = 0;
-					if (unitsToTake == remainingUnits)
-					{
-						possibleNextSlots = possibleNextSlots.Where(x => x.Sku != possibleNextSlot.Sku).ToList();
-					}
-
-					var next = new PickingTravelStep(possibleNextSlot.Position, possibleNextSlot.Sku, possibleNextSlot.Units, yetRequired)
-					{
-						Parent = currentPosition
-					};
-					next.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, next.Position, currentPosition.Position);
-					next.VisitedSlots = new List<PickingSlot>(currentPosition.VisitedSlots) {possibleNextSlot};
-
-					tentativeCost = possibleNextSlots.Count > 0
-						? (int) possibleNextSlots.Average(x => FindTravelCostBetween(precalculatedRoutes, x.Position, possibleNextSlot.Position))
-						: 0;
-					tentativeCost += currentPosition.CostFromStart;
+                var possibleNextSlots = possiblePickingSlots.Where(x => yetRequired.ContainsKey(x.Sku) && !currentPosition.VisitedSlots.Contains(x))
+                                                            .ToList();
+                if (!possibleNextSlots.Any())
+                {
+                    result.Success = false;
+                    break;
+                }
 
 
-					openList.Add(new HeapNode<PickingTravelStep>(next, tentativeCost));
-				}
+                foreach (var nextSlot in possibleNextSlots)
+                {
+                    var remainingUnits = yetRequired[nextSlot.Sku];
+                    var unitsToTake = Math.Min(remainingUnits, nextSlot.Units);
+                    int tentativeCost = 0;
 
-				currentPosition = openList.TakeHeapHeadPosition();
-			}
+                    var remainingSlots = possibleNextSlots.Where(x => x != nextSlot);
+                    if (unitsToTake == remainingUnits)
+                    {
+                        remainingSlots = remainingSlots.Where(x => x.Sku != nextSlot.Sku);
+                    }
 
-			var endPosition = _warehouseLayout.GetPickingEndPosition();
-			var finalStep = new PickingTravelStep(endPosition, -1, 0, currentPosition.PendingSkus);
-			finalStep.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, finalStep.Position, currentPosition.Position);
-			finalStep.Parent = currentPosition;
-			currentPosition = finalStep;
+                    var remainingSlotsList = remainingSlots.ToList();
 
-			// powrót po śladach
-			var steps = new List<ITravelStep>();
-			while (currentPosition != null)
-			{
-				var nextPosition = currentPosition.Parent;
-				currentPosition.Parent = null;
-				steps.Add(currentPosition);
-				if (nextPosition != null && currentPosition != (PickingTravelStep) nextPosition)
-				{
-					var route = FindTravelRouteBetween(precalculatedRoutes, currentPosition.Position, nextPosition.Position).Route;
-					foreach (var coord in route)
-					{
-						result.PathCoordinates.Add(coord);
-					}
-				}
+                    var next = new PickingTravelStep(nextSlot.Position, nextSlot.Sku, nextSlot.Units, yetRequired)
+                               {
+                                   Parent = currentPosition,
+                                   UnitsToTake = unitsToTake
+                               };
+                    next.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, next.Position, currentPosition.Position);
+                    next.VisitedSlots = new List<PickingSlot>(currentPosition.VisitedSlots) {nextSlot};
 
-				currentPosition = nextPosition as PickingTravelStep;
-			}
+                    tentativeCost = FindTravelCostBetween(precalculatedRoutes, nextSlot.Position, endPosition);
+                    tentativeCost += currentPosition.CostFromStart;
+                    tentativeCost += remainingSlotsList.Sum(x => FindTravelCostBetween(precalculatedRoutes, nextSlot.Position, x.Position));
 
-			result.Steps = steps.ToArray();
-			return result;
-		}
 
-		public int FindTravelCostBetween(HashSet<RouteBetweenCoords> pickingSlotRoutes, Coord coord1, Coord coord2)
-		{
-			if (coord1 == coord2)
-			{
-				return 0;
-			}
+                    openList.Add(new HeapNode<PickingTravelStep>(next, tentativeCost));
+                }
 
-			if (pickingSlotRoutes.TryGetValue(new RouteBetweenCoords(coord1, coord2), out var route))
-			{
-				return route.TravelCost;
-			}
-			else
-			{
-				throw new Exception("Travel cost unknown");
-			}
-		}
+                currentPosition = openList.TakeHeapHeadPosition();
+            }
 
-		private RouteBetweenCoords FindTravelRouteBetween(HashSet<RouteBetweenCoords> pickingSlotRoutes, Coord coord1, Coord coord2)
-		{
-			if (coord1 == coord2)
-			{
-				return new RouteBetweenCoords(coord1, coord2);
-			}
+            var finalStep = new PickingTravelStep(endPosition, -1, 0, currentPosition.PendingSkus);
+            finalStep.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, finalStep.Position, currentPosition.Position);
+            finalStep.Parent = currentPosition;
+            currentPosition = finalStep;
 
-			if (pickingSlotRoutes.TryGetValue(new RouteBetweenCoords(coord1, coord2), out var route))
-			{
-				return route;
-			}
-			else
-			{
-				throw new Exception("Travel route unknown");
-			}
-		}
+            // powrót po śladach
+            var pickedArticles = order.RequiredArticles.Select(x=>x.Key).ToDictionary(x=>x,x=>0);
+            var steps = new List<ITravelStep>();
+            while (currentPosition != null)
+            {
+                if (pickedArticles.ContainsKey(currentPosition.Sku))
+                {
+                    pickedArticles[currentPosition.Sku] += currentPosition.UnitsToTake;
+                }
 
-		private HashSet<RouteBetweenCoords> GetRoutesBetweenSlots(List<PickingSlot> pickingSlots)
-		{
-			var coordsSet = new HashSet<Coord>(pickingSlots.Select(x => x.Position))
-			{
-				_warehouseLayout.GetPickingEndPosition(),
-				_warehouseLayout.GetPickingStartPosition(),
-			};
-			var coords = coordsSet.ToArray();
+                var nextPosition = currentPosition.Parent;
+                currentPosition.Parent = null;
+                steps.Add(currentPosition);
+                if (nextPosition != null && currentPosition != (PickingTravelStep) nextPosition)
+                {
+                    var route = FindTravelRouteBetween(precalculatedRoutes, currentPosition.Position, nextPosition.Position).Route;
+                    foreach (var coord in route)
+                    {
+                        result.PathCoordinates.Add(coord);
+                    }
+                }
 
-			var collection = new ConcurrentDictionary<RouteBetweenCoords, byte>();
-			int done = 1;
-			int todo = coords.Length;
-			var sw = new Stopwatch();
-			sw.Start();
-			Parallel.For(0, coords.Length, startIndex =>
-			{
-				var coord1 = coords[startIndex];
+                currentPosition = nextPosition as PickingTravelStep;
+            }
 
-				for (var endIndex = 0; endIndex < pickingSlots.Count; endIndex++)
-				{
-					var coord2 = coords[endIndex];
-					var result = _pathSolver.FindPath(new TravelStep(coord1), new TravelStep(coord2), false);
-					if (result.Success)
-					{
-						//Debug.WriteLine($"Sprawdzono {coord1} - {coord2}");
-						var route = new RouteBetweenCoords(coord1, coord2);
-						route.ReadTravelsteps(result.Steps);
-						collection.AddOrUpdate(route, x => 0, (x, b) => 0);
-					}
-				}
+            result.Steps = steps.ToArray();
+            return result;
+        }
 
-				done += 1;
-				//PickingRoutesCalculationProgress?.Invoke(null, new CalculatePickingRouteProgressEventArgs()
-				//{
-				//	Done = done,
-				//	IterationIndex = startIndex,
-				//	Todo = todo,
-				//	Elapsed = sw.Elapsed,
-				//	CheckeCoord = coord1
-				//});
-			});
-			var pickingSlotRoutes = new HashSet<RouteBetweenCoords>(collection.Keys);
-			return pickingSlotRoutes;
-		}
+        public int FindTravelCostBetween(HashSet<RouteBetweenCoords> pickingSlotRoutes, Coord coord1, Coord coord2)
+        {
+            if (coord1 == coord2)
+            {
+                return 0;
+            }
 
-		#endregion
-	}
+            if (pickingSlotRoutes.TryGetValue(new RouteBetweenCoords(coord1, coord2), out var route))
+            {
+                return route.TravelCost;
+            }
+            else
+            {
+                throw new Exception("Travel cost unknown");
+            }
+        }
+
+        private RouteBetweenCoords FindTravelRouteBetween(HashSet<RouteBetweenCoords> pickingSlotRoutes, Coord coord1, Coord coord2)
+        {
+            if (coord1 == coord2)
+            {
+                return new RouteBetweenCoords(coord1, coord2);
+            }
+
+            if (pickingSlotRoutes.TryGetValue(new RouteBetweenCoords(coord1, coord2), out var route))
+            {
+                return route;
+            }
+            else
+            {
+                throw new Exception("Travel route unknown");
+            }
+        }
+
+        private HashSet<RouteBetweenCoords> GetRoutesBetweenSlots(List<PickingSlot> pickingSlots)
+        {
+            var coordsSet = new HashSet<Coord>(pickingSlots.Select(x => x.Position))
+                            {
+                                _warehouseLayout.GetPickingEndPosition(),
+                                _warehouseLayout.GetPickingStartPosition(),
+                            };
+
+            var coordCombinations = coordsSet.GetKCombs(2).Select(x => x.ToArray());
+            var collection = new ConcurrentDictionary<RouteBetweenCoords, byte>();
+            //int done = 1;
+            //int todo = coords.Length;
+            //var sw = new Stopwatch();
+            //sw.Start();
+
+            Parallel.ForEach(coordCombinations, combination =>
+                                                {
+                                                    var result = _pathSolver.FindPath(new TravelStep(combination[0]), new TravelStep(combination[1]), false);
+                                                    if (result.Success)
+                                                    {
+                                                        //Debug.WriteLine($"Sprawdzono {coord1} - {coord2}");
+                                                        var route = new RouteBetweenCoords(combination[0], combination[1]);
+                                                        route.ReadTravelsteps(result.Steps);
+                                                        collection.AddOrUpdate(route, x => 0, (x, b) => 0);
+                                                    }
+                                                });
+
+            //	done += 1;
+            //	//PickingRoutesCalculationProgress?.Invoke(null, new CalculatePickingRouteProgressEventArgs()
+            //	//{
+            //	//	Done = done,
+            //	//	IterationIndex = startIndex,
+            //	//	Todo = todo,
+            //	//	Elapsed = sw.Elapsed,
+            //	//	CheckeCoord = coord1
+            //	//});
+            //});
+            var pickingSlotRoutes = new HashSet<RouteBetweenCoords>(collection.Keys);
+            return pickingSlotRoutes;
+        }
+
+        #endregion
+    }
 }

@@ -43,6 +43,7 @@ namespace Warehouse.App
 											.SelectMany(x => _warehouseLayout.GetPickingSlotsWithSku(x.Key))
 											.OrderBy(x=>x.AlleyNumber).ThenBy(x=>x.PositionNumber)
 											.ToList();
+
 			var precalculatedRoutes = GetRoutesBetweenSlots(possiblePickingSlots);
 			var remainingInOrder = new Dictionary<long, int>(order.RequiredArticles);
 			foreach (var possiblePickingSlot in possiblePickingSlots)
