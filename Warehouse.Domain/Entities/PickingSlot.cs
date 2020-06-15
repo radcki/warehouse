@@ -16,6 +16,7 @@ namespace Warehouse.Domain.Entities
 		public  long Sku { get; set; }
 		public int Units { get; set; }
 		public int ReservedUnits { get; set; }
+        public int AvailableUnits => Units - ReservedUnits;
 
 		public PickingSlot(Coord position, int alleyNumber, int positionNumber)
 		{
@@ -73,5 +74,15 @@ namespace Warehouse.Domain.Entities
 		{
 			return !Equals(left, right);
 		}
-	}
+
+        #region Overrides of Object
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return Address;
+        }
+
+        #endregion
+    }
 }

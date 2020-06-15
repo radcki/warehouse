@@ -50,11 +50,8 @@
     <Compile Include="Entities\PickingTravelStep.cs" />
     <Compile Include="Entities\RouteBetweenCoords.cs" />
     <Compile Include="Entities\TravelStep.cs" />
-    <Compile Include="HeapList\BinaryHeap.cs" />
     <Compile Include="HeapList\Heap.cs" />
     <Compile Include="HeapList\Node.cs" />
-    <Compile Include="HeapList\IntComparer.cs" />
-    <Compile Include="HeapList\TravelStepComparer.cs" />
     <Compile Include="Interfaces\ILayoutElement.cs" />
     <Compile Include="Parameters\PathFindingResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -63,8 +63,8 @@ namespace Warehouse.Gui.PreviewRenderer
 
             if (LayoutElementCollections == null) LayoutElementCollections = new ObservableCollection<List<ILayoutElement>>();
 
-            var filledPickingSlots = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.PickingSlots.Where(x => x.Units > 0).Select(x => new FilledPickingSlot(x)));
-            var emptyPickingSlots = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.PickingSlots.Where(x => x.Units == 0).Select(x => new EmptyPickingSlot(x)));
+            var filledPickingSlots = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.PickingSlots.Select(x=>x.Value).Where(x => x.Units > 0).Select(x => new FilledPickingSlot(x)));
+            var emptyPickingSlots = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.PickingSlots.Select(x => x.Value).Where(x => x.Units == 0).Select(x => new EmptyPickingSlot(x)));
             Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(filledPickingSlots); });
             Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(emptyPickingSlots); });
             //LayoutElementCollections.Add(filledPickingSlots);

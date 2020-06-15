@@ -30,7 +30,7 @@ namespace Warehouse.App
 		public int Width { get; private set; }
 		public int Height { get; private set; }
 		private List<Obstacle> Obstacles { get; set; } = new List<Obstacle>();
-		public List<PickingSlot> PickingSlots { get; set; } = new List<PickingSlot>();
+		public Dictionary<string, PickingSlot> PickingSlots { get; set; } = new Dictionary<string, PickingSlot>();
 
 		private readonly Area _minimalPassableArea;
 		private byte[,] _pathfindingMap;
@@ -44,7 +44,7 @@ namespace Warehouse.App
 		}
 		public List<PickingSlot> GetPickingSlots()
 		{
-			return new List<PickingSlot>(PickingSlots);
+			return new List<PickingSlot>(PickingSlots.Select(x=>x.Value));
 		}
         public void AddObstacle(Obstacle obstacle)
 		{
@@ -69,14 +69,25 @@ namespace Warehouse.App
 			GenerateWalkableMap();
 		}
 
-        public void AddPickingSlot(PickingSlot slot)
+        public void AddPickingSlot(PickingSlot pickingSlot)
 		{
-			PickingSlots.Add(slot);
+            if (!PickingSlots.ContainsKey(pickingSlot.ToString()))
+            {
+                PickingSlots.Add(pickingSlot.ToString(), pickingSlot);
+
+            }
 		}
 
 		public void AddPickingSlots(IEnumerable<PickingSlot> slots)
-		{
-			PickingSlots.AddRange(slots);
+        {
+            foreach (var pickingSlot in slots)
+            {
+                if (!PickingSlots.ContainsKey(pickingSlot.ToString()))
+                {
+                    PickingSlots.Add(pickingSlot.ToString(), pickingSlot);
+
+				}
+			}
 		}
 
         public void Clear()
@@ -101,7 +112,7 @@ namespace Warehouse.App
 			_pathfindingMap = area;
 		}
 
-        private void GenerateWalkableMap()
+        private async void GenerateWalkableMap()
         {
             var area = new byte[Width + 1, Height + 1];
             for (var x = 0; x <= Width; x++)
@@ -117,7 +128,49 @@ namespace Warehouse.App
 			_walkableMap = area;
 		}
 
-        public bool IsAvailable(Coord coord)
+        public void ReserveArticles(string positionAddress, long sku, int units)
+        {
+           
+            if (!PickingSlots.TryGetValue(positionAddress, out var position))
+            {
+				throw new InvalidOperationException("Position does not exist");
+            }
+            if (position.Sku != sku)
+            {
+                throw new InvalidOperationException("Position does not contain SKU");
+			}
+			if (position.AvailableUnits < units)
+            {
+                throw new InvalidOperationException("Position does not contain enough units");
+            }
+
+            position.ReservedUnits += units;
+		}
+
+        public void TakeArticles(string positionAddress, long sku, int units)
+        {
+            if (!PickingSlots.TryGetValue(positionAddress, out var position))
+            {
+                throw new InvalidOperationException("Position does not exist");
+            }
+            if (position.Sku != sku)
+            {
+                throw new InvalidOperationException("Position does not contain SKU");
+            }
+            if (position.Units < units)
+            {
+                throw new InvalidOperationException("Position does not contain enough units");
+            }
+
+            position.ReservedUnits -= units;
+            position.Units -= units;
+            if (units == 0)
+            {
+                position.Sku = 0;
+            }
+        }
+
+		public bool IsAvailable(Coord coord)
 		{
 			return coord.X >= 0
 				   && coord.Y >= 0
@@ -214,7 +267,7 @@ namespace Warehouse.App
 		public void CalculatePickingRoutes(PathSolver solver)
 		{
 			
-            var coordsSet = new HashSet<Coord>(PickingSlots.Select(x => x.Position))
+            var coordsSet = new HashSet<Coord>(PickingSlots.Select(x => x.Value.Position))
             {
                 GetPickingStartPosition(),
                 GetPickingEndPosition()
@@ -290,7 +343,7 @@ namespace Warehouse.App
 
         public List<PickingSlot> GetPickingSlotsWithSku(long sku)
 		{
-			return PickingSlots.Where(x => x.Sku == sku && x.Units-x.ReservedUnits > 0).ToList();
+			return PickingSlots.Select(x=>x.Value).Where(x => x.Sku == sku && x.Units-x.ReservedUnits > 0).ToList();
 		}
 
 		public Coord GetPickingStartPosition()

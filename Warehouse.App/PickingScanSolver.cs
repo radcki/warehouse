@@ -37,7 +37,7 @@ namespace Warehouse.App
 			{
 				Success = true,
 			};
-			var currentPosition = new PickingTravelStep(_warehouseLayout.GetPickingStartPosition(), -1, 0, new Dictionary<long, int>(order.RequiredArticles));
+			var currentPosition = new PickingTravelStep(_warehouseLayout.GetPickingStartPosition(), new Dictionary<long, int>(order.RequiredArticles));
 
 			var possiblePickingSlots = order.RequiredArticles
 											.SelectMany(x => _warehouseLayout.GetPickingSlotsWithSku(x.Key))
@@ -61,9 +61,9 @@ namespace Warehouse.App
 
 				var unitsToTake = Math.Min(positionUnits, remainingInOrder[possiblePickingSlot.Sku]);
 
-				_warehouseLayout.PickingSlots.FirstOrDefault(x => x == possiblePickingSlot).Units -= unitsToTake;
+				_warehouseLayout.GetPickingSlots().FirstOrDefault(x => x == possiblePickingSlot).Units -= unitsToTake;
 				remainingInOrder[possiblePickingSlot.Sku] -= unitsToTake;
-				currentPosition = new PickingTravelStep(possiblePickingSlot.Position, possiblePickingSlot.Sku, unitsToTake, new Dictionary<long, int>(remainingInOrder));
+				currentPosition = new PickingTravelStep(possiblePickingSlot, unitsToTake, new Dictionary<long, int>(remainingInOrder));
 				currentPosition.Parent = previousPosition;
 
 				if (!remainingInOrder.Any(x => x.Value > 0))
@@ -73,12 +73,11 @@ namespace Warehouse.App
 			}
 
 			var endPosition = _warehouseLayout.GetPickingEndPosition();
-			var finalStep = new PickingTravelStep(endPosition, -1, 0, currentPosition.PendingSkus);
+			var finalStep = new PickingTravelStep(endPosition, currentPosition.PendingSkus);
 			finalStep.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes,finalStep.Position, currentPosition.Position);
 			finalStep.Parent = currentPosition;
 			currentPosition = finalStep;
 
-			// powrót po śladach
 			var steps = new List<ITravelStep>();
 			while (currentPosition != null)
 			{

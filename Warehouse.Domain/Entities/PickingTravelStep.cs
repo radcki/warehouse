@@ -13,34 +13,35 @@ namespace Warehouse.Domain.Entities
 		public int TraverseCost { get; }
         public int UnitsToTake { get; set; }
         public long Sku { get; private set; }
-        public int AvailableUnits { get; private set; }
 		public int CostFromStart { get; set; }
 		public float CostEstimation { get; set; }
-		public Dictionary<long, int> PendingSkus { get; private set; }
+		public Dictionary<long, int> PendingSkus { get; }
 
 		public ITravelStep Parent { get; set; }
 
+		public PickingSlot PickingSlot { get; }
+
 		public List<PickingSlot> VisitedSlots { get; set; } = new List<PickingSlot>();
 
-		public PickingTravelStep(Coord coords, long sku, int availableUnits, Dictionary<long, int> pendingSkus)
+        public PickingTravelStep(Coord position, Dictionary<long, int> pendingSkus)
 		{
-			X = coords.X;
-			Y = coords.Y;
-			Position = coords;
-			Sku = sku;
-			AvailableUnits = availableUnits;
+			X = position.X;
+            Y = position.Y;
+            Position = position;
 			PendingSkus = pendingSkus;
 		}
-
-		public PickingTravelStep(int x, int y, int availableUnits, Dictionary<long, int> pendingSkus)
-		{
-			X = x;
-			Y = y;
-			AvailableUnits = availableUnits;
+		public PickingTravelStep(PickingSlot pickingSlot, int unitsToTake, Dictionary<long, int> pendingSkus)
+        {
+			X = pickingSlot.Position.X;
+			Y = pickingSlot.Position.Y;
+			Position = pickingSlot.Position;
+			Sku = pickingSlot.Sku;
+            UnitsToTake = unitsToTake;
 			PendingSkus = pendingSkus;
-			Position = new Coord(x, y);
-		}
+            PickingSlot = pickingSlot;
+        }
 
+	
 		public bool Equals(PickingTravelStep other)
 		{
 			return other != null && (X == other.X && Y == other.Y);
