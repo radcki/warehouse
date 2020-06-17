@@ -15,6 +15,11 @@ namespace Warehouse.Domain.Entities
             Y = y;
 		}
 
+        public int ManhattanDistanceTo(Coord other)
+        {
+            return Math.Abs(other.X - X) + Math.Abs(other.Y - Y);
+        }
+
 		public override string ToString()
 		{
 			return $"({X},{Y})";

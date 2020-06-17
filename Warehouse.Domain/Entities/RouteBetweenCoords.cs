@@ -19,6 +19,21 @@ namespace Warehouse.Domain.Entities
 		public int TravelCost;
 		public Coord[] Route;
 
+        public bool IsBetween(Coord coord1, Coord coord2)
+        {
+            if (coord1 == _coord1 && coord2 == _coord2)
+            {
+                return true;
+
+            }
+			if (coord1 == _coord2 && coord2 == _coord1)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
 		public void ReadTravelsteps(ITravelStep[] travelSteps)
 		{
 			var last = travelSteps.Length > 0 ? travelSteps[travelSteps.Length-1] : null;

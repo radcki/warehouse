@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Warehouse.Domain.Interfaces;
 
 namespace Warehouse.Domain.Entities
@@ -26,11 +27,14 @@ namespace Warehouse.Domain.Entities
 
 		public ITravelStep Parent { get; set; }
 
+		public List<TravelStep> Neighbours { get; set; }
+
 		public TravelStep(Coord position)
 		{
 			X = position.X;
 			Y = position.Y;
 			Position = position;
+			Neighbours = new List<TravelStep>();
 		}
 		public TravelStep(int x, int y)
 		{

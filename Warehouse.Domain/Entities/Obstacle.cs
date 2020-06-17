@@ -20,7 +20,16 @@ namespace Warehouse.Domain.Entities
 
 			Position = positon;
 			Area = area;
-		} 
+		}
+
+        public Coord[] Corners =>
+            new[]
+            {
+                Position,
+                new Coord(Position.X + Area.Width, Position.Y),
+                new Coord(Position.X + Area.Width, Position.Y + Area.Height),
+                new Coord(Position.X, Position.Y + Area.Height),
+            };
 
         public Coord[] UsedCoords
 		{
