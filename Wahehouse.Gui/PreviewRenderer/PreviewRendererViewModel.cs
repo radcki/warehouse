@@ -54,6 +54,17 @@ namespace Warehouse.Gui.PreviewRenderer
             Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(obstacles); });
         }
 
+		public void LoadTravelVerices()
+		{
+			if (_mainViewModel.WarehouseLayout == null)
+			{
+				return;
+			}
+
+			var vertices = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.GetTravelVertices());
+			Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(vertices); });
+        }
+
         public void LoadPickingSlots()
         {
             if (_mainViewModel.WarehouseLayout == null)

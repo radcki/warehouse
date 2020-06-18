@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -49,6 +51,7 @@
     <Compile Include="Entities\PickingSlot.cs" />
     <Compile Include="Entities\PickingTravelStep.cs" />
     <Compile Include="Entities\RouteBetweenCoords.cs" />
+    <Compile Include="Entities\TravelVertex.cs" />
     <Compile Include="Entities\TravelStep.cs" />
     <Compile Include="HeapList\Heap.cs" />
     <Compile Include="HeapList\Node.cs" />

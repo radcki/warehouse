@@ -80,11 +80,11 @@ namespace Warehouse.Gui.ViewModel
         {
             LayoutCorridorCount = 15;
             LayoutCorridorPallets = 80;
-            LayoutCorridorGaps = new int[]{20,60};
+            LayoutCorridorGaps = new int[] { 20, 60 };
         }
 
-		public ICommand GenerateLayout => new RelayCommand(() => { Task.Run(ExecuteGenerateLayout); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0);
-		public ICommand FindPickingPaths => new RelayCommand(() => { Task.Run(ExecuteFindPickingPaths); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0 && OrdersCount > 0);
+		public ICommand GenerateLayout => new RelayCommand(() => { Task.Run(()=> ExecuteGenerateLayout()); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0);
+		public ICommand FindPickingPaths => new RelayCommand(() => { Task.Run(()=> ExecuteFindPickingPaths()); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0 && OrdersCount > 0);
 
         public void ExecuteGenerateLayout()
         {
@@ -96,21 +96,21 @@ namespace Warehouse.Gui.ViewModel
             var orders = generator.GetPickingOrders(5, 100, 100);
             WarehouseLayout = layout;
 
-            layout.PickingRoutesCalculationProgress += (sender, args) =>
+            layout.WarhouseOperationProgress += (sender, args) =>
                                                        {
                                                            ProgressBarValue = ((100 * 100 * args.Done) / args.Todo);
                                                        };
             _previewRenderer.Clear();
             _previewRenderer.LoadObstacles();
             _previewRenderer.LoadPickingSlots();
+            _previewRenderer.LoadTravelVerices();
 
-        }
+		}
 
         public void ExecuteFindPickingPaths()
         {
             var pickingSolver = new PickingSolver(_warehouseLayout);
 
-            var t = _warehouseLayout.GetTravelSteps();
             //var pickingSolver = new PickingCoordSolver(_warehouseLayout);
             var distanceSolverResult = new List<PathFindingResult<PickingTravelStep>>();
             var orders = _layoutGenerator.GetPickingOrders(OrdersCount, 100, 100);

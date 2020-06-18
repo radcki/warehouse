@@ -59,6 +59,17 @@ namespace Warehouse.Gui.PreviewRenderer.ValueConverters
                             ctx.DrawGeometry(new RectangleGeometry(new Rect(travelStep.Position.X, travelStep.Position.Y, 1, 1)));
                         }
                     }
+					else if (elements.FirstOrDefault() is TravelVertex)
+					{
+						foreach (TravelVertex travelStep in elements)
+						{
+							foreach (var travelStepNeighbour in travelStep.Neighbours)
+							{
+								ctx.BeginFigure(new Point(travelStep.Position.X, travelStep.Position.Y), false, true);
+								ctx.LineTo(new Point(travelStepNeighbour.Position.X, travelStepNeighbour.Position.Y), false, false);
+                            }
+						}
+					}
 
                     geometry.Freeze();
                     return geometry;

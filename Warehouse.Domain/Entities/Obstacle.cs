@@ -25,10 +25,10 @@ namespace Warehouse.Domain.Entities
         public Coord[] Corners =>
             new[]
             {
-                Position,
-                new Coord(Position.X + Area.Width, Position.Y),
-                new Coord(Position.X + Area.Width, Position.Y + Area.Height),
-                new Coord(Position.X, Position.Y + Area.Height),
+                new Coord(Position.X -1, Position.Y-1),
+                new Coord(Position.X + Area.Width+1, Position.Y-1),
+				new Coord(Position.X + Area.Width+1, Position.Y + Area.Height+1),
+                new Coord(Position.X-1, Position.Y + Area.Height+1),
             };
 
         public Coord[] UsedCoords

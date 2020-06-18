@@ -44,6 +44,13 @@ namespace Warehouse.Gui.PreviewRenderer.ValueConverters
 
                     return stroke;
                 }
+
+				if (elements.FirstOrDefault() is TravelVertex)
+				{
+					var stroke = new SolidColorBrush { Color = Color.FromArgb(255, 150, 150, 150) };
+
+					return stroke;
+				}
             }
 
             return Binding.DoNothing;
