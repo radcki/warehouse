@@ -88,7 +88,6 @@
     <Compile Include="PreviewRenderer\WarehouseCanvas.xaml.cs">
       <DependentUpon>WarehouseCanvas.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ValueConverters\ImageSourceValueConverter.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Page Include="MainWindow.xaml">
@@ -145,6 +144,8 @@
       <Name>Warehouse.Domain</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="ValueConverters\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -24,8 +24,8 @@ namespace Warehouse.Gui.ViewModel
     public class MainViewModel : ViewModelBase
     {
 		private Image _previewImage;
-        private PreviewRendererViewModel _previewRenderer => SimpleIoc.Default.GetInstance<PreviewRendererViewModel>();
-        private LayoutGenerator _layoutGenerator = new LayoutGenerator();
+        private PreviewRendererViewModel PreviewRenderer => SimpleIoc.Default.GetInstance<PreviewRendererViewModel>();
+        private readonly LayoutGenerator _layoutGenerator = new LayoutGenerator();
         private int _progressBarValue;
         private int[] _layoutCorridorGaps = new int[0];
         private int _layoutCorridorPallets;
@@ -75,7 +75,6 @@ namespace Warehouse.Gui.ViewModel
             set => Set(() => OrdersCount, ref _ordersCount, value);
         }
 
-
         public MainViewModel()
         {
             LayoutCorridorCount = 15;
@@ -83,8 +82,7 @@ namespace Warehouse.Gui.ViewModel
             LayoutCorridorGaps = new int[] { 20, 60 };
         }
 
-		public ICommand GenerateLayout => new RelayCommand(() => { Task.Run(()=> ExecuteGenerateLayout()); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0);
-		public ICommand FindPickingPaths => new RelayCommand(() => { Task.Run(()=> ExecuteFindPickingPaths()); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0 && OrdersCount > 0);
+		public ICommand GenerateLayout => new RelayCommand(() => { Task.Run(()=> ExecuteGenerateLayout()); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0);public ICommand FindPickingPaths => new RelayCommand(() => { Task.Run(()=> ExecuteFindPickingPaths()); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0 && OrdersCount > 0);
 
         public void ExecuteGenerateLayout()
         {
@@ -100,9 +98,9 @@ namespace Warehouse.Gui.ViewModel
                                                        {
                                                            ProgressBarValue = ((100 * 100 * args.Done) / args.Todo);
                                                        };
-            _previewRenderer.Clear();
-            _previewRenderer.LoadObstacles();
-            _previewRenderer.LoadPickingSlots();
+            PreviewRenderer.Clear();
+            PreviewRenderer.LoadObstacles();
+            PreviewRenderer.LoadPickingSlots();
             _warehouseLayout.GetTravelVertices();
             //_previewRenderer.LoadTravelVertices();
 
@@ -116,19 +114,19 @@ namespace Warehouse.Gui.ViewModel
             
             var distanceSolverResults = new List<PathFindingResult<PickingTravelStep>>();
             var orders = _layoutGenerator.GetPickingOrders(OrdersCount, 100, 100);
-            _previewRenderer.ClearPickingPaths();
+            PreviewRenderer.ClearPickingPaths();
             foreach (var pickingOrder in orders)
             {
                 var result = pickingSolver.FindPath(pickingOrder);
                 if (result.Success)
                 {
-                    _previewRenderer.AddPickingPathFindingResult(result);
+                    PreviewRenderer.AddPickingPathFindingResult(result);
                 }
 
                 distanceSolverResults.Add(result);
             }
 
-            MessageBox.Show($"Œrednio: {distanceSolverResults.Average(x => x.Route.CostFromStart)} w {distanceSolverResults.Average(x=>x.ExecutionTime.TotalMilliseconds)}");
+            MessageBox.Show($"Avg: {distanceSolverResults.Average(x => x.Route.CostFromStart)} in {distanceSolverResults.Average(x=>x.ExecutionTime.TotalMilliseconds)} ms");
 
             //var pickingScanSolver = new PickingScanSolver(_warehouseLayout);
             //var scanSolverResult = new List<PathFindingResult<PickingTravelStep>>();

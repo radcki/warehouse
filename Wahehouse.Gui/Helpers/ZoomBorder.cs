@@ -16,16 +16,19 @@ namespace Warehouse.Gui.Helpers
         private Point _origin;
         private Point _start;
 
+        private TranslateTransform _childTranslateTransform;
+        private ScaleTransform _childScaleTransform;
+
         private TranslateTransform GetTranslateTransform(UIElement element)
         {
-            return (TranslateTransform)((TransformGroup)element.RenderTransform)
-              .Children.First(tr => tr is TranslateTransform);
+            return (TranslateTransform) ((TransformGroup) element.RenderTransform)
+                                       .Children.First(tr => tr is TranslateTransform);
         }
 
         private ScaleTransform GetScaleTransform(UIElement element)
         {
-            return (ScaleTransform)((TransformGroup)element.RenderTransform)
-              .Children.First(tr => tr is ScaleTransform);
+            return (ScaleTransform) ((TransformGroup) element.RenderTransform)
+                                   .Children.First(tr => tr is ScaleTransform);
         }
 
         public override UIElement Child
@@ -42,22 +45,24 @@ namespace Warehouse.Gui.Helpers
         public void Initialize(UIElement element)
         {
             this._child = element;
-            if (_child != null)
-            {
-                TransformGroup group = new TransformGroup();
-                ScaleTransform st = new ScaleTransform();
-                group.Children.Add(st);
-                TranslateTransform tt = new TranslateTransform();
-                group.Children.Add(tt);
-                _child.RenderTransform = group;
-                _child.RenderTransformOrigin = new Point(0.0, 0.0);
-                this.MouseWheel += ChildMouseWheel;
-                this.MouseLeftButtonDown += ChildMouseLeftButtonDown;
-                this.MouseLeftButtonUp += ChildMouseLeftButtonUp;
-                this.MouseMove += ChildMouseMove;
-                this.PreviewMouseRightButtonDown += new MouseButtonEventHandler(
-                  ChildPreviewMouseRightButtonDown);
-            }
+            if (_child == null)
+                return;
+            TransformGroup transformGroup = new TransformGroup();
+            ScaleTransform scaleTransform = new ScaleTransform();
+            transformGroup.Children.Add(scaleTransform);
+            TranslateTransform translateTransform = new TranslateTransform();
+            transformGroup.Children.Add(translateTransform);
+
+            _child.RenderTransform = transformGroup;
+            _child.RenderTransformOrigin = new Point(0.0, 0.0);
+            this.MouseWheel += ChildMouseWheel;
+            this.MouseLeftButtonDown += ChildMouseLeftButtonDown;
+            this.MouseLeftButtonUp += ChildMouseLeftButtonUp;
+            this.MouseMove += ChildMouseMove;
+            this.PreviewMouseRightButtonDown += new MouseButtonEventHandler(
+                                                                            ChildPreviewMouseRightButtonDown);
+            _childTranslateTransform = GetTranslateTransform(_child);
+            _childScaleTransform = GetScaleTransform(_child);
         }
 
         public void Reset()
@@ -65,14 +70,12 @@ namespace Warehouse.Gui.Helpers
             if (_child != null)
             {
                 // reset zoom
-                var st = GetScaleTransform(_child);
-                st.ScaleX = 1.0;
-                st.ScaleY = 1.0;
+                _childScaleTransform.ScaleX = 1.0;
+                _childScaleTransform.ScaleY = 1.0;
 
                 // reset pan
-                var tt = GetTranslateTransform(_child);
-                tt.X = 0.0;
-                tt.Y = 0.0;
+                _childTranslateTransform.X = 0.0;
+                _childTranslateTransform.Y = 0.0;
             }
         }
 
@@ -82,10 +85,11 @@ namespace Warehouse.Gui.Helpers
         {
             if (_child != null)
             {
-                var st = GetScaleTransform(_child);
-                var tt = GetTranslateTransform(_child);
+                var st = _childScaleTransform;
+                var tt = _childTranslateTransform;
 
-                double zoom = e.Delta > 0 ? .2 : -.2;
+                double zoom = e.Delta > 0 ? .1 : -.1;
+                zoom *= st.ScaleX * 2;
                 if (!(e.Delta > 0) && (st.ScaleX < .4 || st.ScaleY < .4))
                     return;
 
@@ -108,9 +112,8 @@ namespace Warehouse.Gui.Helpers
         {
             if (_child != null)
             {
-                var tt = GetTranslateTransform(_child);
                 _start = e.GetPosition(this);
-                _origin = new Point(tt.X, tt.Y);
+                _origin = new Point(_childTranslateTransform.X, _childTranslateTransform.Y);
                 this.Cursor = Cursors.Hand;
                 _child.CaptureMouse();
             }
@@ -132,15 +135,11 @@ namespace Warehouse.Gui.Helpers
 
         private void ChildMouseMove(object sender, MouseEventArgs e)
         {
-            if (_child != null)
+            if (_child != null && _child.IsMouseCaptured)
             {
-                if (_child.IsMouseCaptured)
-                {
-                    var tt = GetTranslateTransform(_child);
-                    Vector v = _start - e.GetPosition(this);
-                    tt.X = _origin.X - v.X;
-                    tt.Y = _origin.Y - v.Y;
-                }
+                Vector v = _start - e.GetPosition(this);
+                _childTranslateTransform.X = _origin.X - v.X;
+                _childTranslateTransform.Y = _origin.Y - v.Y;
             }
         }
 

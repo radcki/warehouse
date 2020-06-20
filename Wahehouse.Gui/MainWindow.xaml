@@ -4,15 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Warehouse.Gui"
-        xmlns:valueConverters="clr-namespace:Warehouse.Gui.ValueConverters"
         xmlns:previewRenderer="clr-namespace:Warehouse.Gui.PreviewRenderer"
         xmlns:helpers="clr-namespace:Warehouse.Gui.Helpers"
         DataContext="{Binding Source={StaticResource Locator}, Path=MainViewModel}"
         mc:Ignorable="d"
         Title="Magazyn" Height="450" Width="800">
-    <Window.Resources>
-        <valueConverters:ImageSourceValueConverter x:Key="ImageSourceValueConverter" />
-    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition />
