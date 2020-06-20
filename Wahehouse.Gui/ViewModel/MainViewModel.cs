@@ -110,9 +110,9 @@ namespace Warehouse.Gui.ViewModel
 
         public void ExecuteFindPickingPaths()
         {
-            var pickingSolver = new PickingScanSolver(_warehouseLayout);
+            //var pickingSolver = new PickingScanSolver(_warehouseLayout);
             //var pickingSolver = new PickingCoordSolver(_warehouseLayout);
-            //var pickingSolver = new PickingSolver(_warehouseLayout);
+            var pickingSolver = new PickingSolver(_warehouseLayout);
             
             var distanceSolverResults = new List<PathFindingResult<PickingTravelStep>>();
             var orders = _layoutGenerator.GetPickingOrders(OrdersCount, 100, 100);

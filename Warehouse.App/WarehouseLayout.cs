@@ -31,12 +31,24 @@ namespace Warehouse.App
         public int Width { get; private set; }
         public int Height { get; private set; }
         private List<Obstacle> Obstacles { get; set; } = new List<Obstacle>();
-        private HashSet<TravelVertex> TravelVertices { get; set; }
+
+        private HashSet<TravelVertex> TravelVertices
+        {
+            get => _travelVertices;
+            set
+            {
+                TravelVerticesDictionary = value.ToDictionary(x => x.Position, x => x.Neighbours.Select(s => s.Position).ToArray());
+                _travelVertices = value;
+            }
+        }
+
+        private Dictionary<Coord, Coord[]> TravelVerticesDictionary { get; set; }
         public Dictionary<string, PickingSlot> PickingSlots { get; set; } = new Dictionary<string, PickingSlot>();
 
         private readonly Area _minimalPassableArea;
         private byte[,] _pathfindingMap;
         private byte[,] _walkableMap;
+        private HashSet<TravelVertex> _travelVertices;
         private HashSet<RouteBetweenCoords> PickingSlotRoutes { get; set; } = new HashSet<RouteBetweenCoords>();
         public event EventHandler<WarhouseOperationProgressEventArgs> WarhouseOperationProgress;
 
@@ -55,21 +67,43 @@ namespace Warehouse.App
                 GenerateTravelSteps();
             }
 
-            return TravelVertices.ToDictionary(x=>x.Position, x=>x.Neighbours.Select(s=>s.Position).ToArray());
+            return TravelVerticesDictionary;
+        }
+
+        public IEnumerable<Coord> GetObstacleBlocksCorners()
+        {
+            foreach (var obstacle in Obstacles)
+            {
+                var cornerNw = new Coord(obstacle.Position.X, obstacle.Position.Y);
+                var cornerNe = new Coord(obstacle.Position.X + obstacle.Area.Width, obstacle.Position.Y);
+
+                var cornerSw = new Coord(obstacle.Position.X, obstacle.Position.Y + obstacle.Area.Height);
+                var cornerSe = new Coord(obstacle.Position.X + obstacle.Area.Width, obstacle.Position.Y + obstacle.Area.Height);
+
+                if (_walkableMap[cornerNw.X, cornerNw.Y - 1] == 0)
+                    yield return cornerNw + new Coord(-1, -1);
+
+                if (_walkableMap[cornerNe.X, cornerNe.Y - 1] == 0) 
+                    yield return cornerNe + new Coord(1, -1);
+
+                if (_walkableMap[cornerSw.X, cornerSw.Y + 1] == 0) 
+                    yield return cornerSw + new Coord(-1, 1);
+
+                if (_walkableMap[cornerSe.X, cornerSe.Y + 1] == 0) 
+                    yield return cornerSe + new Coord(1, 1);
+            }
         }
 
         public void GenerateTravelSteps()
         {
+            var sw = Stopwatch.StartNew();
             var vertices = PickingSlots.Select(x => x.Value.Position)
-                                       .Union(Obstacles.SelectMany(x => x.Corners))
-                                       .Union(new Coord[]{GetPickingEndPosition(), GetPickingStartPosition()})
+                                       .Union(GetObstacleBlocksCorners())
+                                       .Union(new Coord[] {GetPickingEndPosition(), GetPickingStartPosition()})
                                        .Select(x => new TravelVertex(x))
-                                       .ToHashSet()
+                                       .Distinct()
                                        .ToArray();
-            var sw = new Stopwatch();
-            sw.Start();
             var done = 0;
-
             var degreeOfParallelism = Environment.ProcessorCount;
             var tasks = new Task[degreeOfParallelism];
             for (int taskNumber = 0; taskNumber < degreeOfParallelism; taskNumber++)

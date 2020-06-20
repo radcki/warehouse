@@ -31,9 +31,8 @@ namespace Warehouse.App
             while (true)
             {
                 var newTour = startingTour.GenerateMutations()
-                                          .Where(tour => tour != null)
                                           .MinBy(tour => tour.Cost());
-                if (newTour.Cost() < startingTour.Cost())
+                if (newTour != null && newTour.Cost() < startingTour.Cost())
                 {
                     startingTour = newTour;
                 }
