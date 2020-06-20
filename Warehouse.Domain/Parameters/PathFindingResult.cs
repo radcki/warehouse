@@ -1,20 +1,38 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Warehouse.Domain.Entities;
+using Warehouse.Domain.Interfaces;
 
 namespace Warehouse.Domain.Parameters
 {
-	public interface IPathFindingResult
+	public interface IPathFindingResult: ILayoutElement
 	{
-		ITravelStep[] Steps { get; }
-		IList<Coord> PathCoordinates { get; set; }
-		bool Success { get; set; }
+        ITravelStep Route { get; set; }
+        IEnumerable<ITravelStep> Steps { get; }
+        IList<IList<Coord>> Paths { get; set; }
+        bool Success { get; set; }
 	}
     public class PathFindingResult<T> : IPathFindingResult
     {
-        public ITravelStep[] Steps { get; set; }
-        public IList<Coord> PathCoordinates { get; set; } = new List<Coord>();
-        public List<Coord> CheckedCoordinates { get; set; } = new List<Coord>();
+        public ITravelStep Route { get; set; }
+        public TimeSpan ExecutionTime { get; set; }
+
+        public IEnumerable<ITravelStep> Steps
+        {
+            get
+            {
+                var current = Route;
+                while (current?.Parent != null)
+                {
+                    yield return current;
+                    current = current.Parent;
+                }
+            }
+        }
+
+        public IList<IList<Coord>> Paths { get; set; } = new List<IList<Coord>>();
+
         public bool Success { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Warehouse.Domain.Parameters;
 
 namespace Warehouse.Domain.Entities
 {
@@ -24,7 +25,6 @@ namespace Warehouse.Domain.Entities
             if (coord1 == _coord1 && coord2 == _coord2)
             {
                 return true;
-
             }
 			if (coord1 == _coord2 && coord2 == _coord1)
             {
@@ -34,15 +34,10 @@ namespace Warehouse.Domain.Entities
             return false;
         }
 
-		public void ReadTravelsteps(ITravelStep[] travelSteps)
+		public void ReadTravelSteps(IPathFindingResult pathFindingResult)
 		{
-			var last = travelSteps.Length > 0 ? travelSteps[travelSteps.Length-1] : null;
-
-			Route = travelSteps.Select(x => x.Position).ToArray();
-			if (last != null)
-			{
-				TravelCost = last.CostFromStart + last.TraverseCost;
-			}
+            Route = pathFindingResult.Steps.Select(x=>x.Position).ToArray();
+			TravelCost = pathFindingResult.Route.CostFromStart;
 		}
 
 		public bool Equals(RouteBetweenCoords other)

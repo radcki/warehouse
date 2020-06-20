@@ -103,16 +103,18 @@ namespace Warehouse.Gui.ViewModel
             _previewRenderer.Clear();
             _previewRenderer.LoadObstacles();
             _previewRenderer.LoadPickingSlots();
-            _previewRenderer.LoadTravelVerices();
+            _warehouseLayout.GetTravelVertices();
+            //_previewRenderer.LoadTravelVertices();
 
-		}
+        }
 
         public void ExecuteFindPickingPaths()
         {
-            var pickingSolver = new PickingSolver(_warehouseLayout);
-
+            var pickingSolver = new PickingScanSolver(_warehouseLayout);
             //var pickingSolver = new PickingCoordSolver(_warehouseLayout);
-            var distanceSolverResult = new List<PathFindingResult<PickingTravelStep>>();
+            //var pickingSolver = new PickingSolver(_warehouseLayout);
+            
+            var distanceSolverResults = new List<PathFindingResult<PickingTravelStep>>();
             var orders = _layoutGenerator.GetPickingOrders(OrdersCount, 100, 100);
             _previewRenderer.ClearPickingPaths();
             foreach (var pickingOrder in orders)
@@ -123,10 +125,11 @@ namespace Warehouse.Gui.ViewModel
                     _previewRenderer.AddPickingPathFindingResult(result);
                 }
 
-                distanceSolverResult.Add(result);
+                distanceSolverResults.Add(result);
             }
 
-            MessageBox.Show($"Œrednio: {distanceSolverResult.Average(x => x.PathCoordinates.Count)}");
+            MessageBox.Show($"Œrednio: {distanceSolverResults.Average(x => x.Route.CostFromStart)} w {distanceSolverResults.Average(x=>x.ExecutionTime.TotalMilliseconds)}");
+
             //var pickingScanSolver = new PickingScanSolver(_warehouseLayout);
             //var scanSolverResult = new List<PathFindingResult<PickingTravelStep>>();
             //foreach (var pickingOrder in orders)

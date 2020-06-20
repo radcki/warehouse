@@ -9,7 +9,7 @@ namespace Warehouse.Domain.Interfaces
 {
     public interface ILayoutElement
     {
-        Coord Position { get; }
-        Area Area { get; }
+        //Coord Position { get; }
+        //Area Area { get; }
     }
 }

@@ -8,6 +8,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using Warehouse.Domain.Entities;
 using Warehouse.Domain.Interfaces;
+using Warehouse.Domain.Parameters;
 using Warehouse.Gui.PreviewRenderer.Extensions;
 
 namespace Warehouse.Gui.PreviewRenderer.ValueConverters
@@ -27,7 +28,7 @@ namespace Warehouse.Gui.PreviewRenderer.ValueConverters
                 {
                     if (elements.FirstOrDefault() is Obstacle)
                     {
-                        foreach (var obstacle in elements)
+                        foreach (Obstacle obstacle in elements)
                         {
                             var position = obstacle.Position;
                             var pointNW = new Point(position.X, position.Y);
@@ -43,33 +44,51 @@ namespace Warehouse.Gui.PreviewRenderer.ValueConverters
                             ctx.LineTo(pointNE, true, false);
                             ctx.LineTo(pointSW, true, false);
                         }
+
                         geometry.FillRule = FillRule.EvenOdd;
                     }
                     else if (elements.FirstOrDefault() is PickingSlot)
                     {
-                        foreach (var pickingSlot in elements)
+                        foreach (PickingSlot pickingSlot in elements)
                         {
                             ctx.DrawGeometry(new EllipseGeometry(new Point(pickingSlot.Position.X, pickingSlot.Position.Y), 1.5, 1.5));
                         }
                     }
                     else if (elements.FirstOrDefault() is CoordLayoutElement)
                     {
-                        foreach (var travelStep in elements)
+                        foreach (CoordLayoutElement travelStep in elements)
                         {
                             ctx.DrawGeometry(new RectangleGeometry(new Rect(travelStep.Position.X, travelStep.Position.Y, 1, 1)));
                         }
                     }
-					else if (elements.FirstOrDefault() is TravelVertex)
-					{
-						foreach (TravelVertex travelStep in elements)
-						{
-							foreach (var travelStepNeighbour in travelStep.Neighbours)
-							{
-								ctx.BeginFigure(new Point(travelStep.Position.X, travelStep.Position.Y), false, true);
-								ctx.LineTo(new Point(travelStepNeighbour.Position.X, travelStepNeighbour.Position.Y), false, false);
+                    else if (elements.FirstOrDefault() is IPathFindingResult)
+                    {
+                        foreach (IPathFindingResult pathFindingResult in elements)
+                        {
+                            foreach (var path in pathFindingResult.Paths)
+                            {
+                                var current = path[0];
+                                ctx.BeginFigure(new Point(current.X, current.Y), false, false);
+                                for (var i = 1; i < path.Count; i++)
+                                {
+                                    current = path[i];
+                                    ctx.LineTo(new Point(current.X, current.Y), true, false);
+                                }
                             }
-						}
-					}
+                            
+                        }
+                    }
+                    else if (elements.FirstOrDefault() is TravelVertex)
+                    {
+                        foreach (TravelVertex travelStep in elements)
+                        {
+                            foreach (var travelStepNeighbour in travelStep.Neighbours)
+                            {
+                                ctx.BeginFigure(new Point(travelStep.Position.X, travelStep.Position.Y), false, true);
+                                ctx.LineTo(new Point(travelStepNeighbour.Position.X, travelStepNeighbour.Position.Y), false, false);
+                            }
+                        }
+                    }
 
                     geometry.Freeze();
                     return geometry;

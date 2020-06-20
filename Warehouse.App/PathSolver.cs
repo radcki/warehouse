@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Warehouse.Domain.Entities;
 using Warehouse.Domain.HeapList;
 using Warehouse.Domain.Parameters;
@@ -32,19 +34,20 @@ namespace Warehouse.App
             if (!_warehouseLayout.IsWalkable(startTravelStep.Position))
             {
                 return new PathFindingResult<TravelStep>()
-                {
-                    Success = false
-                };
+                       {
+                           Success = false
+                       };
             }
 
             if (!_warehouseLayout.IsWalkable(endTravelStep.Position))
             {
                 return new PathFindingResult<TravelStep>()
-                {
-                    Success = false
-                };
+                       {
+                           Success = false
+                       };
             }
 
+            var travelVertices = _warehouseLayout.GetTravelVerticesDictionary();
             var openList = new Heap<TravelStep>();
 
             var closedList = new byte[_warehouseLayout.Width + 1, _warehouseLayout.Height + 1];
@@ -62,14 +65,17 @@ namespace Warehouse.App
                 {
                     break;
                 }
+
                 closedList[currentPosition.X, currentPosition.Y] = 1;
 
-                var movementOptions = GetAvailableTravelSteps(currentPosition, traverse);
+                //var movementOptions = GetAvailableTravelSteps(currentPosition, traverse);
+                travelVertices.TryGetValue(currentPosition.Position, out var movementOptions);
+                //var movementOptions = travelVertices.FirstOrDefault(x=>x.Position == currentPosition.Position).Neighbours.Select(x=>new TravelStep(x.Position));
 
                 // dodaj wyszukane do sterty
-                foreach (var position in movementOptions)
+                foreach (var position in movementOptions.Select(x => new TravelStep(x)))
                 {
-                    result.CheckedCoordinates.Add(position.Position);
+                    //result.CheckedCoordinates.Add(position.Position);
 
                     if (closedList[position.X, position.Y] == 1)
                     {
@@ -77,39 +83,26 @@ namespace Warehouse.App
                     }
 
                     //var tentativeGScore = currentPosition.CostFromStart + currentPosition.EuclidianDistanceTo(position);
-                    var gScore = currentPosition.CostFromStart + position.TraverseCost;
-                    var cost = gScore + currentPosition.CostFromStart*position.ManhattanDistanceTo(endTravelStep);
+                    var gScore = currentPosition.CostFromStart + position.EuclidianDistanceTo(currentPosition);
+                    var fScore = gScore + position.ManhattanDistanceTo(endTravelStep);
+
                     position.Parent = currentPosition;
-                    position.CostFromStart = gScore;
+                    position.CostFromStart = (int) gScore;
 
                     if (addedToOpenList[position.X, position.Y] == 0)
                     {
-                        openList.Add(new HeapNode<TravelStep>(position, cost));
-                        addedToOpenList[position.X, position.Y] = (int)gScore;
+                        openList.Add(new HeapNode<TravelStep>(position, fScore));
+                        addedToOpenList[position.X, position.Y] = (int) gScore;
                     }
                     else if (addedToOpenList[position.X, position.Y] > gScore)
                     {
-                        openList.Reinsert(new HeapNode<TravelStep>(position, cost));
+                        openList.Reinsert(new HeapNode<TravelStep>(position, fScore));
                     }
                 }
             }
 
             result.Success = currentPosition == endTravelStep;
-            //Debug.WriteLine("Wykonano krokow: " + stepCount + ". Wynik końcowy: " + (currentPosition == endTravelStep ? "POWODZENIE" : "NIEPOWODZENIE"));
-
-            // powrót po śladach
-            var steps = new List<ITravelStep>();
-            while (currentPosition != startTravelStep)
-            {
-                var nextPosition = currentPosition.Parent;
-                currentPosition.Parent = null;
-                steps.Add(currentPosition);
-                result.PathCoordinates.Add(currentPosition.Position);
-
-                currentPosition = nextPosition as TravelStep;
-            }
-            steps.Reverse();
-            result.Steps = steps.ToArray();
+            result.Route = currentPosition;
 
             return result;
         }

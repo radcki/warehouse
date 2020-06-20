@@ -9,9 +9,8 @@ namespace Warehouse.App.Helpers
 {
     public static class BresenhamsLine
     {
-        public static List<Coord> LineCoordinates(Coord coord1, Coord coord2)
+        public static bool TryToWalk(Coord coord1, Coord coord2, Func<Coord,bool> isWalkableFunc)
         {
-            var result = new List<Coord>();
             var x = coord1.X;
             var y = coord1.Y;
             var x2 = coord2.X;
@@ -39,7 +38,11 @@ namespace Warehouse.App.Helpers
             int numerator = longest >> 1;
             for (int i = 0; i <= longest; i++)
             {
-                result.Add(new Coord(x, y));
+                var coord = new Coord(x, y);
+                if (!isWalkableFunc(coord))
+                {
+                    return false;
+                }
                 numerator += shortest;
                 if (!(numerator < longest))
                 {
@@ -54,7 +57,7 @@ namespace Warehouse.App.Helpers
                 }
             }
 
-            return result;
+            return true;
         }
     }
 }

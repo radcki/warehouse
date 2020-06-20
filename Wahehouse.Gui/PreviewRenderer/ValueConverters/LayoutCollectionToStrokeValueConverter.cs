@@ -9,6 +9,7 @@ using System.Windows.Media;
 using GalaSoft.MvvmLight.Ioc;
 using Warehouse.Domain.Entities;
 using Warehouse.Domain.Interfaces;
+using Warehouse.Domain.Parameters;
 using Warehouse.Gui.ViewModel;
 
 namespace Warehouse.Gui.PreviewRenderer.ValueConverters
@@ -33,23 +34,22 @@ namespace Warehouse.Gui.PreviewRenderer.ValueConverters
 
                 if (elements.FirstOrDefault() is PickingSlot)
                 {
-                    var stroke = new SolidColorBrush { Color = Color.FromArgb(0,0,0,0) };
-
-                    return stroke;
+                    return new SolidColorBrush { Color = Color.FromArgb(0, 0, 0, 0) };
                 }
 
                 if (elements.FirstOrDefault() is CoordLayoutElement)
                 {
-                    var stroke = new SolidColorBrush { Color = Color.FromArgb(255, 230, 0, 0) };
-
-                    return stroke;
+                    return new SolidColorBrush { Color = Color.FromArgb(255, 230, 0, 0) };
                 }
 
-				if (elements.FirstOrDefault() is TravelVertex)
-				{
-					var stroke = new SolidColorBrush { Color = Color.FromArgb(255, 150, 150, 150) };
+                if (elements.FirstOrDefault() is IPathFindingResult)
+                {
+                    return new SolidColorBrush { Color = Color.FromArgb(255, 230, 0, 0) };
+                }
 
-					return stroke;
+                if (elements.FirstOrDefault() is TravelVertex)
+				{
+					return new SolidColorBrush { Color = Color.FromArgb(255, 150, 150, 150) };
 				}
             }
 

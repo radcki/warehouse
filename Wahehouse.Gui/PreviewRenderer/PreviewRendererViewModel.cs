@@ -54,7 +54,7 @@ namespace Warehouse.Gui.PreviewRenderer
             Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(obstacles); });
         }
 
-		public void LoadTravelVerices()
+		public void LoadTravelVertices()
 		{
 			if (_mainViewModel.WarehouseLayout == null)
 			{
@@ -92,8 +92,8 @@ namespace Warehouse.Gui.PreviewRenderer
 
         public void AddPickingPathFindingResult(PathFindingResult<PickingTravelStep> pathFindingResult)
         {
-            var steps = pathFindingResult.PathCoordinates.Select(x => new CoordLayoutElement(x)).ToList();
-            Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(new List<ILayoutElement>(steps)); });
+            //var steps = pathFindingResult.PathCoordinates.Select(x => new CoordLayoutElement(x)).ToList();
+            Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(new List<ILayoutElement>(){pathFindingResult}); });
         }
     }
 }

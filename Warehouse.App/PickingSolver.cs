@@ -33,6 +33,7 @@ namespace Warehouse.App
 
         public PathFindingResult<PickingTravelStep> FindPath(PickingOrder order)
         {
+            var executionStopwatch = Stopwatch.StartNew();
             var result = new PathFindingResult<PickingTravelStep>
                          {
                              Success = true,
@@ -86,21 +87,20 @@ namespace Warehouse.App
                         remainingSlots = remainingSlots.Where(x => x.Sku != nextSlot.Sku);
                     }
 
-                    var remainingSlotsList = remainingSlots.ToList();
-
                     var next = new PickingTravelStep(nextSlot, unitsToTake, new Dictionary<long, int>(currentPosition.PendingSkus))
                                {
                                    Parent = currentPosition,
                                };
+
                     next.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(routesBetweenSlots, next.Position, currentPosition.Position);
                     next.VisitedSlots = new List<PickingSlot>(currentPosition.VisitedSlots) {nextSlot};
 
-                    var tentativeCost = FindTravelCostBetween(routesBetweenSlots, nextSlot.Position, endPosition);
-                    tentativeCost += currentPosition.CostFromStart;
-                    tentativeCost += remainingSlotsList.Sum(x => FindTravelCostBetween(routesBetweenSlots, nextSlot.Position, x.Position));
+                    var fScore = FindTravelCostBetween(routesBetweenSlots, nextSlot.Position, endPosition);
+                    fScore += currentPosition.CostFromStart;
+                    fScore += remainingSlots.Sum(x => FindTravelCostBetween(routesBetweenSlots, nextSlot.Position, x.Position));
 
 
-                    openList.Add(new HeapNode<PickingTravelStep>(next, tentativeCost));
+                    openList.Add(new HeapNode<PickingTravelStep>(next, fScore));
                 }
 
                 currentPosition = openList.TakeHeapHeadPosition();
@@ -114,6 +114,7 @@ namespace Warehouse.App
             // recreate found path and reserve items on stock
             var pickedArticles = order.RequiredArticles.Select(x => x.Key).ToDictionary(x => x, x => 0);
             var steps = new List<ITravelStep>();
+            result.Route = currentPosition;
             while (currentPosition != null)
             {
                 if (pickedArticles.ContainsKey(currentPosition.Sku))
@@ -132,16 +133,17 @@ namespace Warehouse.App
                 if (nextPosition != null && currentPosition != (PickingTravelStep) nextPosition)
                 {
                     var route = FindTravelRouteBetween(routesBetweenSlots, currentPosition.Position, nextPosition.Position).Route;
-                    foreach (var coord in route)
+                    if (route[0] != currentPosition.Position)
                     {
-                        result.PathCoordinates.Add(coord);
+                        route.Reverse();
                     }
+                    result.Paths.Add(route);
                 }
 
                 currentPosition = nextPosition as PickingTravelStep;
             }
 
-            result.Steps = steps.ToArray();
+            result.ExecutionTime = executionStopwatch.Elapsed;
             return result;
         }
 
@@ -201,7 +203,7 @@ namespace Warehouse.App
                                                     {
                                                         //Debug.WriteLine($"Sprawdzono {coord1} - {coord2}");
                                                         var route = new RouteBetweenCoords(combination[0], combination[1]);
-                                                        route.ReadTravelsteps(result.Steps);
+                                                        route.ReadTravelSteps(result);
                                                         collection.AddOrUpdate(route, x => 0, (x, b) => 0);
                                                     }
                                                 });

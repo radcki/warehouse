@@ -9,6 +9,7 @@ using System.Windows.Media;
 using GalaSoft.MvvmLight.Ioc;
 using Warehouse.Domain.Entities;
 using Warehouse.Domain.Interfaces;
+using Warehouse.Domain.Parameters;
 using Warehouse.Gui.PreviewRenderer.StateModels;
 using Warehouse.Gui.ViewModel;
 
@@ -35,6 +36,19 @@ namespace Warehouse.Gui.PreviewRenderer.ValueConverters
                 if (elements.FirstOrDefault() is EmptyPickingSlot)
                 {
                     var stroke = new SolidColorBrush {Color = Color.FromRgb(120, 120, 120)};
+
+                    if (parameter is string opacityMultiplier)
+                    {
+                        var multiplier = double.Parse(opacityMultiplier, CultureInfo.InvariantCulture);
+                        stroke.Opacity = Math.Max(0, Math.Min(1, stroke.Opacity * multiplier));
+                    }
+
+                    return stroke;
+                }
+
+                if (elements.FirstOrDefault() is IPathFindingResult)
+                {
+                    var stroke = new SolidColorBrush { Color = Color.FromRgb(230, 0, 0) };
 
                     if (parameter is string opacityMultiplier)
                     {

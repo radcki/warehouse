@@ -33,8 +33,9 @@ namespace Warehouse.App
 
 		public PathFindingResult<PickingTravelStep> FindPath(PickingOrder order)
 		{
+            var executionStopwatch = Stopwatch.StartNew();
 			var result = new PathFindingResult<PickingTravelStep>
-			{
+                         {
 				Success = true,
 			};
 			var currentPosition = new PickingTravelStep(_warehouseLayout.GetPickingStartPosition(), new Dictionary<long, int>(order.RequiredArticles));
@@ -49,22 +50,23 @@ namespace Warehouse.App
 			foreach (var possiblePickingSlot in possiblePickingSlots)
 			{
 				var previousPosition = currentPosition;
-				if (!remainingInOrder.TryGetValue(possiblePickingSlot.Sku, out int positionUnits) || remainingInOrder[possiblePickingSlot.Sku] < 1)
+				if (!remainingInOrder.TryGetValue(possiblePickingSlot.Sku, out int remainingUnits) || remainingInOrder[possiblePickingSlot.Sku] < 1)
 				{
 					continue;
 				}
 
-				if (positionUnits < 1)
+				if (remainingUnits < 1)
 				{
 					continue;
 				}
 
-				var unitsToTake = Math.Min(positionUnits, remainingInOrder[possiblePickingSlot.Sku]);
+				var unitsToTake = Math.Min(remainingUnits, possiblePickingSlot.Units);
 
-				_warehouseLayout.GetPickingSlots().FirstOrDefault(x => x == possiblePickingSlot).Units -= unitsToTake;
 				remainingInOrder[possiblePickingSlot.Sku] -= unitsToTake;
 				currentPosition = new PickingTravelStep(possiblePickingSlot, unitsToTake, new Dictionary<long, int>(remainingInOrder));
 				currentPosition.Parent = previousPosition;
+                currentPosition.UnitsToTake = unitsToTake;
+				currentPosition.CostFromStart = previousPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes, previousPosition.Position, currentPosition.Position);
 
 				if (!remainingInOrder.Any(x => x.Value > 0))
 				{
@@ -77,25 +79,34 @@ namespace Warehouse.App
 			finalStep.CostFromStart = currentPosition.CostFromStart + FindTravelCostBetween(precalculatedRoutes,finalStep.Position, currentPosition.Position);
 			finalStep.Parent = currentPosition;
 			currentPosition = finalStep;
+            var pickedArticles = order.RequiredArticles.Select(x => x.Key).ToDictionary(x => x, x => 0);
 
 			var steps = new List<ITravelStep>();
+            result.Route = finalStep;
 			while (currentPosition != null)
 			{
+                if (pickedArticles.ContainsKey(currentPosition.Sku))
+                {
+                    pickedArticles[currentPosition.Sku] += currentPosition.UnitsToTake;
+                }
+
+                if (currentPosition.PickingSlot != null)
+                {
+                    _warehouseLayout.ReserveArticles(currentPosition.PickingSlot.Address, currentPosition.Sku, currentPosition.UnitsToTake);
+                }
+
 				var nextPosition = currentPosition.Parent;
 				currentPosition.Parent = null;
 				steps.Add(currentPosition);
 				if (nextPosition != null && currentPosition!=(PickingTravelStep)nextPosition)
 				{
 					var route = FindTravelRouteBetween(precalculatedRoutes, currentPosition.Position, nextPosition.Position).Route;
-					foreach (var coord in route)
-					{
-						result.PathCoordinates.Add(coord);
-					}
+					result.Paths.Add(route);
 				}
 				currentPosition = nextPosition as PickingTravelStep;
 			}
 
-			result.Steps = steps.ToArray();
+            result.ExecutionTime = executionStopwatch.Elapsed;
 			return result;
 		}
 
@@ -157,7 +168,7 @@ namespace Warehouse.App
 					{
 						//Debug.WriteLine($"Sprawdzono {coord1} - {coord2}");
 						var route = new RouteBetweenCoords(coord1, coord2);
-						route.ReadTravelsteps(result.Steps);
+						route.ReadTravelSteps(result);
 						collection.AddOrUpdate(route, x => 0, (x, b) => 0);
 					}
 				}

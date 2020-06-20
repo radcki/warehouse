@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Helpers\BresenhamsLine.cs" />
     <Compile Include="IEnumerableExtensions.cs" />
+    <Compile Include="PathSolver - Copy.cs" />
     <Compile Include="PathSolver.cs" />
     <Compile Include="PickingScanSolver.cs" />
     <Compile Include="PickingCoordSolver.cs" />

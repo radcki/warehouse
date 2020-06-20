@@ -16,7 +16,7 @@ namespace Warehouse.App
         public int Done { get; set; }
         public TimeSpan Elapsed { get; set; }
         public int IterationIndex { get; set; }
-		public string Description { get; set; }
+        public string Description { get; set; }
     }
 
     public class WarehouseLayout
@@ -31,8 +31,8 @@ namespace Warehouse.App
         public int Width { get; private set; }
         public int Height { get; private set; }
         private List<Obstacle> Obstacles { get; set; } = new List<Obstacle>();
-        private List<TravelVertex> TravelVertices { get; set; }
-		public Dictionary<string, PickingSlot> PickingSlots { get; set; } = new Dictionary<string, PickingSlot>();
+        private HashSet<TravelVertex> TravelVertices { get; set; }
+        public Dictionary<string, PickingSlot> PickingSlots { get; set; } = new Dictionary<string, PickingSlot>();
 
         private readonly Area _minimalPassableArea;
         private byte[,] _pathfindingMap;
@@ -40,90 +40,116 @@ namespace Warehouse.App
         private HashSet<RouteBetweenCoords> PickingSlotRoutes { get; set; } = new HashSet<RouteBetweenCoords>();
         public event EventHandler<WarhouseOperationProgressEventArgs> WarhouseOperationProgress;
 
-		public List<TravelVertex> GetTravelVertices()
-		{
-			if (TravelVertices == null)
-			{
-				 GenereteTravelSteps();
-			}
-
-			return TravelVertices;
-		}
-        public void GenereteTravelSteps()
-		{
-            var vertices = new HashSet<TravelVertex>(PickingSlots.Select(x => x.Value.Position)
-																 .Union(Obstacles.SelectMany(x => x.Corners))
-																 .Select(x => new TravelVertex(x)));
-			var sw = new Stopwatch();
-			sw.Start();
-			for (var i = 0; i < vertices.Count; i++)
-			{
-				var vertex = vertices.ElementAt(i);
-
-                // N
-                var closestVertexN = vertices.Where(c => c.Y < vertex.Y)
-                                             .OrderByDescending(c => c.Y)
-                                             .ThenBy(c => Math.Abs(vertex.X - c.X))
-											 .FirstOrDefault(c => AreInLineOfSight(vertex.Position, c.Position));
-
-                if (closestVertexN != default)
-                {
-                    vertex.Neighbours.Add(closestVertexN);
-                }
-
-                // S
-                var closestVertexS = vertices
-									 .Where(c => c.Y > vertex.Y)
-									 .OrderBy(c => c.Y)
-									 .ThenBy(c=> Math.Abs(vertex.X - c.X))
-									 .FirstOrDefault(c => AreInLineOfSight(vertex.Position, c.Position));
-
-                if (closestVertexS != default)
-                {
-                    vertex.Neighbours.Add(closestVertexS);
-                }
-
-                // W
-                var closestVertexW = vertices.Where(c => c.X < vertex.X)
-                                             .OrderByDescending(c => c.X)
-                                             .ThenBy(c => Math.Abs(vertex.Y - c.Y))
-											 .FirstOrDefault(c => AreInLineOfSight(vertex.Position, c.Position));
-
-                if (closestVertexW != default)
-                {
-                    vertex.Neighbours.Add(closestVertexW);
-                }
-
-                // E
-                var closestVertexE = vertices.Where(c => c.X > vertex.X)
-                                             .OrderBy(c => c.X)
-                                             .ThenBy(c => Math.Abs(vertex.Y - c.Y))
-											 .FirstOrDefault(c => AreInLineOfSight(vertex.Position, c.Position));
-
-                if (closestVertexE != default)
-                {
-                    vertex.Neighbours.Add(closestVertexE);
-                }
-
-				if (i % 100 == 0)
-				{
-					WarhouseOperationProgress?.Invoke(vertices, new WarhouseOperationProgressEventArgs()
-					{
-						Todo = vertices.Count,
-						Done = i,
-						IterationIndex = i,
-						Elapsed = sw.Elapsed
-					});
-				}
+        public IEnumerable<TravelVertex> GetTravelVertices()
+        {
+            if (TravelVertices == null)
+            {
+                GenerateTravelSteps();
+            }
+            return TravelVertices;
+        }
+        public Dictionary<Coord, Coord[]> GetTravelVerticesDictionary()
+        {
+            if (TravelVertices == null)
+            {
+                GenerateTravelSteps();
             }
 
-			TravelVertices = vertices.Where(x => x.Neighbours.Count > 0).ToList();
+            return TravelVertices.ToDictionary(x=>x.Position, x=>x.Neighbours.Select(s=>s.Position).ToArray());
+        }
+
+        public void GenerateTravelSteps()
+        {
+            var vertices = PickingSlots.Select(x => x.Value.Position)
+                                       .Union(Obstacles.SelectMany(x => x.Corners))
+                                       .Union(new Coord[]{GetPickingEndPosition(), GetPickingStartPosition()})
+                                       .Select(x => new TravelVertex(x))
+                                       .ToHashSet()
+                                       .ToArray();
+            var sw = new Stopwatch();
+            sw.Start();
+            var done = 0;
+
+            var degreeOfParallelism = Environment.ProcessorCount;
+            var tasks = new Task[degreeOfParallelism];
+            for (int taskNumber = 0; taskNumber < degreeOfParallelism; taskNumber++)
+            {
+                int taskNumberCopy = taskNumber;
+                tasks[taskNumber] = Task.Run(() =>
+                                             {
+                                                 for (int i = vertices.Length * taskNumberCopy / degreeOfParallelism;
+                                                      i < vertices.Length * (taskNumberCopy + 1) / degreeOfParallelism;
+                                                      i++)
+                                                 {
+                                                     var vertex = vertices[i];
+
+                                                     // N
+                                                     var closestVertexN = vertices.Where(c => c.Y < vertex.Y)
+                                                                                  .OrderByDescending(c => c.Y)
+                                                                                  .ThenBy(c => Math.Abs(vertex.X - c.X))
+                                                                                  .FirstOrDefault(c => AreInLineOfSight(vertex.Position, c.Position));
+
+                                                     if (closestVertexN != default)
+                                                     {
+                                                         vertex.Neighbours.Add(closestVertexN);
+                                                     }
+
+                                                     // S
+                                                     var closestVertexS = vertices.Where(c => c.Y > vertex.Y)
+                                                                                  .OrderBy(c => c.Y)
+                                                                                  .ThenBy(c => Math.Abs(vertex.X - c.X))
+                                                                                  .FirstOrDefault(c => AreInLineOfSight(vertex.Position, c.Position));
+
+                                                     if (closestVertexS != default)
+                                                     {
+                                                         vertex.Neighbours.Add(closestVertexS);
+                                                     }
+
+                                                     // W
+                                                     var closestVertexW = vertices.Where(c => c.X < vertex.X)
+                                                                                  .OrderByDescending(c => c.X)
+                                                                                  .ThenBy(c => Math.Abs(vertex.Y - c.Y))
+                                                                                  .FirstOrDefault(c => AreInLineOfSight(vertex.Position, c.Position));
+
+                                                     if (closestVertexW != default)
+                                                     {
+                                                         vertex.Neighbours.Add(closestVertexW);
+                                                     }
+
+                                                     // E
+                                                     var closestVertexE = vertices.Where(c => c.X > vertex.X)
+                                                                                  .OrderBy(c => c.X)
+                                                                                  .ThenBy(c => Math.Abs(vertex.Y - c.Y))
+                                                                                  .FirstOrDefault(c => AreInLineOfSight(vertex.Position, c.Position));
+
+                                                     if (closestVertexE != default)
+                                                     {
+                                                         vertex.Neighbours.Add(closestVertexE);
+                                                     }
+
+                                                     done += 1;
+                                                     if (done % 100 == 0)
+                                                     {
+                                                         WarhouseOperationProgress?.Invoke(vertices, new WarhouseOperationProgressEventArgs()
+                                                                                                     {
+                                                                                                         Todo = vertices.Length,
+                                                                                                         Done = done,
+                                                                                                         IterationIndex = i,
+                                                                                                         Elapsed = sw.Elapsed
+                                                                                                     });
+                                                     }
+                                                 }
+                                             });
+            }
+
+            Task.WaitAll(tasks);
+            
+            TravelVertices = vertices.Where(x => x.Neighbours.Count > 0).ToHashSet();
         }
 
         private bool AreInLineOfSight(Coord coord1, Coord coord2)
         {
-            var coords = BresenhamsLine.LineCoordinates(coord1, coord2);
-            return coords.All(IsWalkable);
+            return BresenhamsLine.TryToWalk(coord1, coord2, IsWalkable);
         }
 
         public List<Obstacle> GetObstacles()
@@ -382,19 +408,19 @@ namespace Warehouse.App
                                                    {
                                                        //Debug.WriteLine($"Sprawdzono {coord1} - {coord2}");
                                                        var route = new RouteBetweenCoords(coord1, coord2);
-                                                       route.ReadTravelsteps(result.Steps);
+                                                       route.ReadTravelSteps(result);
                                                        collection.AddOrUpdate(route, x => 0, (x, b) => 0);
                                                    }
                                                }
 
                                                done += 1;
                                                WarhouseOperationProgress?.Invoke(null, new WarhouseOperationProgressEventArgs()
-                                                                                              {
-                                                                                                  Done = done,
-                                                                                                  IterationIndex = startIndex,
-                                                                                                  Todo = todo,
-                                                                                                  Elapsed = sw.Elapsed,
-                                                                                              });
+                                                                                       {
+                                                                                           Done = done,
+                                                                                           IterationIndex = startIndex,
+                                                                                           Todo = todo,
+                                                                                           Elapsed = sw.Elapsed,
+                                                                                       });
                                            });
             PickingSlotRoutes = new HashSet<RouteBetweenCoords>(collection.Keys);
         }

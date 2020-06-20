@@ -15,11 +15,7 @@ namespace Warehouse.Gui.Helpers
         private WarehouseLayout _warehouseLayout;
         private readonly Area _palletArea = new Area(12, 8);
         private readonly Area _corridorArea = new Area(15, 15);
-
-        public LayoutGenerator()
-        {
-        }
-
+        
         private void GenerateAlleys(Coord startingPosition, int corridorCount, int corridorPallets, int[] gaps)
         {
             var obstacles = new List<Obstacle>();

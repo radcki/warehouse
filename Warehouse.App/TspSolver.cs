@@ -30,8 +30,8 @@ namespace Warehouse.App
             //the actual algorithm
             while (true)
             {
-                Console.WriteLine(startingTour);
                 var newTour = startingTour.GenerateMutations()
+                                          .Where(tour => tour != null)
                                           .MinBy(tour => tour.Cost());
                 if (newTour.Cost() < startingTour.Cost())
                 {
@@ -41,7 +41,6 @@ namespace Warehouse.App
             }
 
             var current = startingTour.Anchor.CanGetTo();
-            var steps = new List<PickingTravelStep>();
  
 
             return current.Select(x=>x.Step).ToList();
@@ -71,8 +70,8 @@ namespace Warehouse.App
 
             public double Distance(Stop other)
             {
-                return _distances.FirstOrDefault(x => x.IsBetween(Step.Position, other.Step.Position))
-                                 .TravelCost;
+                _distances.TryGetValue(new RouteBetweenCoords(Step.Position, other.Step.Position), out var route);
+                return route.TravelCost;
             }
 
 

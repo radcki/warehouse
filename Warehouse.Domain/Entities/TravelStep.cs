@@ -48,7 +48,7 @@ namespace Warehouse.Domain.Entities
 		public float EuclidianDistanceTo(TravelStep other)
 		{
 			return (float) (2 * (Math.Sqrt(Math.Pow(Math.Abs(X - other.X), 2) + Math.Pow(Math.Abs(Y - other.Y), 2))));
-		}
+		} 
 
 		public bool Equals(TravelStep other)
 		{
