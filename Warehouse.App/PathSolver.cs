@@ -61,28 +61,24 @@ namespace Warehouse.App
             {
                 stepCount++;
                 currentPosition = openList.TakeHeapHeadPosition();
-                if (currentPosition == endTravelStep) // sukces
+                if (currentPosition == endTravelStep) // success
                 {
                     break;
                 }
 
                 closedList[currentPosition.X, currentPosition.Y] = 1;
-
-                //var movementOptions = GetAvailableTravelSteps(currentPosition, traverse);
+                
+                // get travel options from precalculated collection
                 travelVertices.TryGetValue(currentPosition.Position, out var movementOptions);
-                //var movementOptions = travelVertices.FirstOrDefault(x=>x.Position == currentPosition.Position).Neighbours.Select(x=>new TravelStep(x.Position));
 
-                // dodaj wyszukane do sterty
+                // add movement options to heap
                 foreach (var position in movementOptions.Select(x => new TravelStep(x)))
                 {
-                    //result.CheckedCoordinates.Add(position.Position);
-
                     if (closedList[position.X, position.Y] == 1)
                     {
                         continue;
                     }
 
-                    //var tentativeGScore = currentPosition.CostFromStart + currentPosition.EuclidianDistanceTo(position);
                     var gScore = currentPosition.CostFromStart + position.EuclidianDistanceTo(currentPosition);
                     var fScore = gScore + position.ManhattanDistanceTo(endTravelStep);
 
@@ -106,72 +102,7 @@ namespace Warehouse.App
 
             return result;
         }
-
-        /// <summary>
-        /// Sprawdzone zostaje czy sąsiadujące komórki nie są na liście zablokowanych i czy nie
-        /// wykraczają poza siatkę
-        /// </summary>
-        /// <returns></returns>
-        public List<TravelStep> GetAvailableTravelSteps(TravelStep travelStep, bool includeDiagonal)
-        {
-            var availableSteps = new List<TravelStep>();
-
-            //Południe
-            if (_warehouseLayout.IsWalkable(new Coord(travelStep.X, travelStep.Y + 1)))
-            {
-                availableSteps.Add(new TravelStep(travelStep.X, travelStep.Y + 1));
-            }
-
-            //Zachód
-            if (_warehouseLayout.IsWalkable(new Coord(travelStep.X + 1, travelStep.Y)))
-            {
-                availableSteps.Add(new TravelStep(travelStep.X + 1, travelStep.Y));
-            }
-
-            //Północ
-            if (_warehouseLayout.IsWalkable(new Coord(travelStep.X, travelStep.Y - 1)))
-            {
-                availableSteps.Add(new TravelStep(travelStep.X, travelStep.Y - 1));
-            }
-
-
-            //Wschód
-            if (_warehouseLayout.IsWalkable(new Coord(travelStep.X - 1, travelStep.Y)))
-            {
-                availableSteps.Add(new TravelStep(travelStep.X - 1, travelStep.Y));
-            }
-
-
-            if (includeDiagonal)
-            {
-                //Północ-Zachód
-                if (_warehouseLayout.IsWalkable(new Coord(travelStep.X - 1, travelStep.Y - 1)))
-                {
-                    availableSteps.Add(new TravelStep(travelStep.X - 1, travelStep.Y - 1));
-                }
-
-                //Południe-Wschód
-                if (_warehouseLayout.IsWalkable(new Coord(travelStep.X + 1, travelStep.Y + 1)))
-                {
-                    availableSteps.Add(new TravelStep(travelStep.X + 1, travelStep.Y + 1));
-                }
-
-                //Południe-Zachód
-                if (_warehouseLayout.IsWalkable(new Coord(travelStep.X - 1, travelStep.Y + 1)))
-                {
-                    availableSteps.Add(new TravelStep(travelStep.X - 1, travelStep.Y + 1));
-                }
-
-                //Północ-Wschód
-                if (_warehouseLayout.IsWalkable(new Coord(travelStep.X + 1, travelStep.Y - 1)))
-                {
-                    availableSteps.Add(new TravelStep(travelStep.X + 1, travelStep.Y - 1));
-                }
-            }
-
-            return availableSteps;
-        }
-
+        
         #endregion
     }
 }

@@ -80,7 +80,6 @@ namespace Warehouse.App
                 }
             }
 
-            var pickedArticles = order.RequiredArticles.Select(x => x.Key).ToDictionary(x => x, x => 0);
             var tspSolver = new TspSolver();
             var slotVisitOrder = tspSolver.OrderSlots(pickingTravelSteps, routesBetweenSlots);
 
