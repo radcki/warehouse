@@ -11,6 +11,7 @@ namespace Warehouse.Domain.Parameters
         ITravelStep Route { get; set; }
         IEnumerable<ITravelStep> Steps { get; }
         IList<IList<Coord>> Paths { get; set; }
+        TimeSpan ExecutionTime { get; }
         bool Success { get; set; }
 	}
     public class PathFindingResult<T> : IPathFindingResult

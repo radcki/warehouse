@@ -26,6 +26,8 @@
                     <Label>Order count:</Label>
                     <TextBox Text="{Binding Path=OrdersCount}"></TextBox>
                     <Button Command="{Binding FindPickingPaths}">Find paths</Button>
+                    <Button Command="{Binding StartRandomTravels}">Start random travels</Button>
+                    <Button Command="{Binding StopRandomTravels}">Stop random travels</Button>
                 </StackPanel>
             </Grid>
             <Grid Grid.Column="1" Background="White">

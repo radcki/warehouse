@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Warehouse.Domain.Entities;
 using Warehouse.Domain.HeapList;
 using Warehouse.Domain.Parameters;
@@ -30,6 +31,7 @@ namespace Warehouse.App
         public PathFindingResult<TravelStep> FindPath(TravelStep startTravelStep, TravelStep endTravelStep, bool traverse)
         {
             var result = new PathFindingResult<TravelStep>();
+            var stopwatch = Stopwatch.StartNew();
 
             if (!_warehouseLayout.IsWalkable(startTravelStep.Position))
             {
@@ -99,7 +101,8 @@ namespace Warehouse.App
 
             result.Success = currentPosition == endTravelStep;
             result.Route = currentPosition;
-
+            result.ExecutionTime = stopwatch.Elapsed;
+            stopwatch.Stop();
             return result;
         }
         

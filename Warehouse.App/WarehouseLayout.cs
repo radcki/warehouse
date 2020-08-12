@@ -50,7 +50,7 @@ namespace Warehouse.App
         private byte[,] _walkableMap;
         private HashSet<TravelVertex> _travelVertices;
         private HashSet<RouteBetweenCoords> PickingSlotRoutes { get; set; } = new HashSet<RouteBetweenCoords>();
-        public event EventHandler<WarhouseOperationProgressEventArgs> WarhouseOperationProgress;
+        public event EventHandler<WarhouseOperationProgressEventArgs> WarehouseOperationProgress;
 
         public IEnumerable<TravelVertex> GetTravelVertices()
         {
@@ -58,8 +58,10 @@ namespace Warehouse.App
             {
                 GenerateTravelSteps();
             }
+
             return TravelVertices;
         }
+
         public Dictionary<Coord, Coord[]> GetTravelVerticesDictionary()
         {
             if (TravelVertices == null)
@@ -72,6 +74,11 @@ namespace Warehouse.App
 
         public IEnumerable<Coord> GetObstacleBlocksCorners()
         {
+            if (_walkableMap == null)
+            {
+                GenerateWalkableMap();
+            }
+
             foreach (var obstacle in Obstacles)
             {
                 var cornerNw = new Coord(obstacle.Position.X, obstacle.Position.Y);
@@ -83,13 +90,13 @@ namespace Warehouse.App
                 if (_walkableMap[cornerNw.X, cornerNw.Y - 1] == 0)
                     yield return cornerNw + new Coord(-1, -1);
 
-                if (_walkableMap[cornerNe.X, cornerNe.Y - 1] == 0) 
+                if (_walkableMap[cornerNe.X, cornerNe.Y - 1] == 0)
                     yield return cornerNe + new Coord(1, -1);
 
-                if (_walkableMap[cornerSw.X, cornerSw.Y + 1] == 0) 
+                if (_walkableMap[cornerSw.X, cornerSw.Y + 1] == 0)
                     yield return cornerSw + new Coord(-1, 1);
 
-                if (_walkableMap[cornerSe.X, cornerSe.Y + 1] == 0) 
+                if (_walkableMap[cornerSe.X, cornerSe.Y + 1] == 0)
                     yield return cornerSe + new Coord(1, 1);
             }
         }
@@ -164,20 +171,20 @@ namespace Warehouse.App
                                                      done += 1;
                                                      if (done % 100 == 0)
                                                      {
-                                                         WarhouseOperationProgress?.Invoke(vertices, new WarhouseOperationProgressEventArgs()
-                                                                                                     {
-                                                                                                         Todo = vertices.Length,
-                                                                                                         Done = done,
-                                                                                                         IterationIndex = i,
-                                                                                                         Elapsed = sw.Elapsed
-                                                                                                     });
+                                                         WarehouseOperationProgress?.Invoke(vertices, new WarhouseOperationProgressEventArgs()
+                                                                                                      {
+                                                                                                          Todo = vertices.Length,
+                                                                                                          Done = done,
+                                                                                                          IterationIndex = i,
+                                                                                                          Elapsed = sw.Elapsed
+                                                                                                      });
                                                      }
                                                  }
                                              });
             }
 
             Task.WaitAll(tasks);
-            
+
             TravelVertices = vertices.Where(x => x.Neighbours.Count > 0).ToHashSet();
         }
 
@@ -260,7 +267,7 @@ namespace Warehouse.App
             _pathfindingMap = area;
         }
 
-        private async void GenerateWalkableMap()
+        private void GenerateWalkableMap()
         {
             var area = new byte[Width + 1, Height + 1];
             for (var x = 0; x <= Width; x++)
@@ -448,14 +455,15 @@ namespace Warehouse.App
                                                }
 
                                                done += 1;
-                                               WarhouseOperationProgress?.Invoke(null, new WarhouseOperationProgressEventArgs()
-                                                                                       {
-                                                                                           Done = done,
-                                                                                           IterationIndex = startIndex,
-                                                                                           Todo = todo,
-                                                                                           Elapsed = sw.Elapsed,
-                                                                                       });
+                                               WarehouseOperationProgress?.Invoke(null, new WarhouseOperationProgressEventArgs()
+                                                                                        {
+                                                                                            Done = done,
+                                                                                            IterationIndex = startIndex,
+                                                                                            Todo = todo,
+                                                                                            Elapsed = sw.Elapsed,
+                                                                                        });
                                            });
+            PickingSlotRoutes = new HashSet<RouteBetweenCoords>(collection.Keys);
             PickingSlotRoutes = new HashSet<RouteBetweenCoords>(collection.Keys);
         }
 

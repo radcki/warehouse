@@ -23,7 +23,7 @@ namespace Warehouse.Gui.ViewModel
 {
     public class MainViewModel : ViewModelBase
     {
-		private Image _previewImage;
+        private Image _previewImage;
         private PreviewRendererViewModel PreviewRenderer => SimpleIoc.Default.GetInstance<PreviewRendererViewModel>();
         private readonly LayoutGenerator _layoutGenerator = new LayoutGenerator();
         private int _progressBarValue;
@@ -32,23 +32,24 @@ namespace Warehouse.Gui.ViewModel
         private int _layoutCorridorCount;
         private WarehouseLayout _warehouseLayout;
         private int _ordersCount = 5;
+        private RandomTraveler _randomTraveler;
 
         public Image PreviewImage
-		{
-			get => _previewImage;
-			set => Set(()=>PreviewImage, ref _previewImage, value);
-		}
+        {
+            get => _previewImage;
+            set => Set(() => PreviewImage, ref _previewImage, value);
+        }
 
-		public int ProgressBarValue
-		{
-			get => _progressBarValue;
-			set => Set(() => ProgressBarValue, ref _progressBarValue, value);
-		}
+        public int ProgressBarValue
+        {
+            get => _progressBarValue;
+            set => Set(() => ProgressBarValue, ref _progressBarValue, value);
+        }
 
         public int LayoutCorridorCount
         {
             get => _layoutCorridorCount;
-            set => Set(()=>LayoutCorridorCount, ref _layoutCorridorCount, value);
+            set => Set(() => LayoutCorridorCount, ref _layoutCorridorCount, value);
         }
 
         public int LayoutCorridorPallets
@@ -56,12 +57,12 @@ namespace Warehouse.Gui.ViewModel
             get => _layoutCorridorPallets;
             set => Set(() => LayoutCorridorPallets, ref _layoutCorridorPallets, value);
         }
-	
+
         public int[] LayoutCorridorGaps
         {
             get => _layoutCorridorGaps;
             set => Set(() => LayoutCorridorGaps, ref _layoutCorridorGaps, value);
-		}
+        }
 
         public WarehouseLayout WarehouseLayout
         {
@@ -77,12 +78,16 @@ namespace Warehouse.Gui.ViewModel
 
         public MainViewModel()
         {
-            LayoutCorridorCount = 15;
-            LayoutCorridorPallets = 80;
-            LayoutCorridorGaps = new int[] { 20, 60 };
+            LayoutCorridorCount = 40;
+            LayoutCorridorPallets = 90;
+            LayoutCorridorGaps = new int[] {30, 60};
         }
 
-		public ICommand GenerateLayout => new RelayCommand(() => { Task.Run(()=> ExecuteGenerateLayout()); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0);public ICommand FindPickingPaths => new RelayCommand(() => { Task.Run(()=> ExecuteFindPickingPaths()); },()=>LayoutCorridorPallets > 0 && LayoutCorridorCount>0 && OrdersCount > 0);
+        public ICommand GenerateLayout => new RelayCommand(() => { Task.Run(() => ExecuteGenerateLayout()); }, () => LayoutCorridorPallets > 0 && LayoutCorridorCount > 0);
+        public ICommand FindPickingPaths => new RelayCommand(() => { Task.Run(() => ExecuteFindPickingPaths()); }, () => LayoutCorridorPallets > 0 && LayoutCorridorCount > 0 && OrdersCount > 0);
+
+        public ICommand StartRandomTravels => new RelayCommand(() => { _randomTraveler.Start(); }, _randomTraveler != null && !_randomTraveler.IsInProgress);
+        public ICommand StopRandomTravels => new RelayCommand(() => { _randomTraveler.Stop(); }, _randomTraveler != null && _randomTraveler.IsInProgress);
 
         public void ExecuteGenerateLayout()
         {
@@ -91,19 +96,35 @@ namespace Warehouse.Gui.ViewModel
                                   .FillWithArticles(80, 1000, 20)
                                   .GetLayout();
 
-            var orders = generator.GetPickingOrders(5, 100, 100);
             WarehouseLayout = layout;
 
-            layout.WarhouseOperationProgress += (sender, args) =>
-                                                       {
-                                                           ProgressBarValue = ((100 * 100 * args.Done) / args.Todo);
-                                                       };
+            layout.WarehouseOperationProgress += (sender, args) => { ProgressBarValue = ((100 * 100 * args.Done) / args.Todo); };
+
             PreviewRenderer.Clear();
             PreviewRenderer.LoadObstacles();
             PreviewRenderer.LoadPickingSlots();
             _warehouseLayout.GetTravelVertices();
-            //_previewRenderer.LoadTravelVertices();
+            //PreviewRenderer.LoadTravelVertices();
+            _randomTraveler = CreateRandomTraveler();
+        }
 
+        private RandomTraveler CreateRandomTraveler()
+        {
+            var traveler = new RandomTraveler(WarehouseLayout);
+            //traveler.RouteFound += (sender, args) =>
+            //                       {
+            //                           PreviewRenderer.ClearPickingPaths();
+            //                           PreviewRenderer.AddPickingPathFindingResult(args.PathFindingResult);
+            //                       };
+            traveler.TravelStopped += (sender, args) =>
+                                      {
+                                          PreviewRenderer.ClearPickingPaths();
+                                          foreach (var findingResult in args.PathFindingResults)
+                                          {
+                                              PreviewRenderer.AddPickingPathFindingResult(findingResult);
+                                          }
+                                      };
+            return traveler;
         }
 
         public void ExecuteFindPickingPaths()
@@ -111,7 +132,7 @@ namespace Warehouse.Gui.ViewModel
             //var pickingSolver = new PickingScanSolver(_warehouseLayout);
             //var pickingSolver = new PickingCoordSolver(_warehouseLayout);
             var pickingSolver = new PickingSolver(_warehouseLayout);
-            
+
             var distanceSolverResults = new List<PathFindingResult<PickingTravelStep>>();
             var orders = _layoutGenerator.GetPickingOrders(OrdersCount, 100, 100);
             PreviewRenderer.ClearPickingPaths();
@@ -126,7 +147,7 @@ namespace Warehouse.Gui.ViewModel
                 distanceSolverResults.Add(result);
             }
 
-            MessageBox.Show($"Avg: {distanceSolverResults.Average(x => x.Route.CostFromStart)} in {distanceSolverResults.Average(x=>x.ExecutionTime.TotalMilliseconds)} ms");
+            MessageBox.Show($"Avg: {distanceSolverResults.Average(x => x.Route.CostFromStart)} in {distanceSolverResults.Average(x => x.ExecutionTime.TotalMilliseconds)} ms");
 
             //var pickingScanSolver = new PickingScanSolver(_warehouseLayout);
             //var scanSolverResult = new List<PathFindingResult<PickingTravelStep>>();

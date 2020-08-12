@@ -70,8 +70,8 @@ namespace Warehouse.Gui.Helpers
 
         public LayoutGenerator GenerateLayout(int corridorCount, int corridorPallets, int[] gaps)
         {
-            _width = (corridorCount * (_corridorArea.Width + _palletArea.Width * 2)) + _corridorArea.Width * 5;
-            _height = corridorPallets * _palletArea.Height + _corridorArea.Height * 10;
+            _width = (corridorCount * (_corridorArea.Width*2 + _palletArea.Width * 2)) + _corridorArea.Width * 5;
+            _height = corridorPallets * _palletArea.Height + _corridorArea.Height * 10 + gaps.Length * _corridorArea.Height;
             _warehouseLayout = new WarehouseLayout(_width, _height, new Area(_corridorArea.Width / 2, _corridorArea.Height / 2));
             GenerateAlleys(new Coord(_corridorArea.Width * 2, _corridorArea.Height * 2), corridorCount, corridorPallets, gaps);
             return this;

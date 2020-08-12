@@ -54,15 +54,15 @@ namespace Warehouse.Gui.PreviewRenderer
             Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(obstacles); });
         }
 
-		public void LoadTravelVertices()
-		{
-			if (_mainViewModel.WarehouseLayout == null)
-			{
-				return;
-			}
+        public void LoadTravelVertices()
+        {
+            if (_mainViewModel.WarehouseLayout == null)
+            {
+                return;
+            }
 
-			var vertices = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.GetTravelVertices());
-			Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(vertices); });
+            var vertices = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.GetTravelVertices());
+            Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(vertices); });
         }
 
         public void LoadPickingSlots()
@@ -74,7 +74,7 @@ namespace Warehouse.Gui.PreviewRenderer
 
             if (LayoutElementCollections == null) LayoutElementCollections = new ObservableCollection<List<ILayoutElement>>();
 
-            var filledPickingSlots = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.PickingSlots.Select(x=>x.Value).Where(x => x.Units > 0).Select(x => new FilledPickingSlot(x)));
+            var filledPickingSlots = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.PickingSlots.Select(x => x.Value).Where(x => x.Units > 0).Select(x => new FilledPickingSlot(x)));
             var emptyPickingSlots = new List<ILayoutElement>(_mainViewModel.WarehouseLayout.PickingSlots.Select(x => x.Value).Where(x => x.Units == 0).Select(x => new EmptyPickingSlot(x)));
             Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(filledPickingSlots); });
             Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(emptyPickingSlots); });
@@ -90,10 +90,14 @@ namespace Warehouse.Gui.PreviewRenderer
             }
         }
 
-        public void AddPickingPathFindingResult(PathFindingResult<PickingTravelStep> pathFindingResult)
+        public void AddPickingPathFindingResult(IPathFindingResult pathFindingResult)
         {
             //var steps = pathFindingResult.PathCoordinates.Select(x => new CoordLayoutElement(x)).ToList();
-            Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(new List<ILayoutElement>(){pathFindingResult}); });
+            lock (LayoutElementCollections)
+                Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(new List<ILayoutElement>() {pathFindingResult}); });
+            {
+                Application.Current.Dispatcher.InvokeAsync(() => { LayoutElementCollections.Add(new List<ILayoutElement>() {pathFindingResult}); });
+            }
         }
     }
 }
